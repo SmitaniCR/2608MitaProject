@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>カテゴリ登録・編集</title>
+</head>
+<body>
+    <h1 th:text="${categoryForm.categoryId} != null ? 'カテゴリ編集' : 'カテゴリ登録'"></h1>
+
+    <form th:action="${categoryForm.categoryId} != null
+                ? @{/admin/categories/{id}/edit(id=${categoryForm.categoryId})}
+                : @{/admin/categories/new}"
+          th:object="${categoryForm}" method="post">
+
+        <input type="hidden" th:field="*{categoryId}" />
+
+        <div>
+            <label for="categoryName">カテゴリ名</label>
+            <input type="text" id="categoryName" th:field="*{categoryName}" />
+            <span th:if="${#fields.hasErrors('categoryName')}" th:errors="*{categoryName}" style="color: red;"></span>
+        </div>
+
+        <button type="submit">保存</button>
+        <a th:href="@{/admin/categories}">一覧に戻る</a>
+    </form>
+</body>
+</html>
