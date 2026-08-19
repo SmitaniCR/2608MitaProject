@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>カテゴリ管理</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
     <h1>カテゴリ管理</h1>
 
-    <p th:if="${message}" th:text="${message}" style="color: green;"></p>
+    <p id="message" style="color: green;"></p>
 
     <p><a th:href="@{/admin/books}">書籍管理へ</a></p>
 
@@ -21,19 +22,63 @@
                 <th>操作</th>
             </tr>
         </thead>
-        <tbody>
-            <tr th:each="category : ${categories}">
-                <td th:text="${category.categoryId}"></td>
-                <td th:text="${category.categoryName}"></td>
-                <td>
-                    <a th:href="@{/admin/categories/{id}/edit(id=${category.categoryId})}">編集</a>
-                    <form th:action="@{/admin/categories/{id}/delete(id=${category.categoryId})}" method="post" style="display:inline;"
-                          onsubmit="return confirm('削除してよろしいですか？');">
-                        <button type="submit">削除</button>
-                    </form>
-                </td>
-            </tr>
+        <tbody id="category-list">
         </tbody>
     </table>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var editUrlBase = /*[[@{/admin/categories/}]]*/ '/admin/categories/';
+        /*]]>*/
+
+        function renderCategories(categories) {
+            var $tbody = $('#category-list');
+            $tbody.empty();
+            $.each(categories, function (i, category) {
+                var $row = $('<tr>').attr('data-category-id', category.categoryId);
+                $row.append($('<td>').text(category.categoryId));
+                $row.append($('<td>').text(category.categoryName));
+
+                var $actions = $('<td>');
+                $actions.append($('<a>').attr('href', editUrlBase + category.categoryId + '/edit').text('編集'));
+                $actions.append(' ');
+                $actions.append($('<button>').attr('type', 'button').addClass('delete-button').text('削除'));
+
+                $row.append($actions);
+                $tbody.append($row);
+            });
+        }
+
+        function loadCategories() {
+            $.getJSON('/api/categories', function (data) {
+                renderCategories(data);
+            });
+        }
+
+        $(function () {
+            loadCategories();
+
+            $('#category-list').on('click', '.delete-button', function () {
+                if (!confirm('削除してよろしいですか？')) {
+                    return;
+                }
+                var $row = $(this).closest('tr');
+                var categoryId = $row.data('category-id');
+
+                $.ajax({
+                    url: '/api/categories/' + categoryId,
+                    type: 'DELETE',
+                    success: function () {
+                        $row.remove();
+                        $('#message').text('カテゴリを削除しました');
+                    },
+                    error: function (xhr) {
+                        var message = (xhr.responseJSON && xhr.responseJSON.message) || '削除に失敗しました';
+                        alert(message);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

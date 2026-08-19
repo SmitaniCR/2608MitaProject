@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>マイページ</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body>
+    <p><a th:href="@{/}">トップへ戻る</a></p>
+
+    <h1>マイページ</h1>
+
+    <p id="page-error" style="color: red;"></p>
+
+    <h2>貸出履歴</h2>
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr>
+                <th>書籍</th>
+                <th>貸出日</th>
+                <th>返却期限</th>
+                <th>返却日</th>
+                <th>状態</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="loan-list">
+        </tbody>
+    </table>
+
+    <h2>予約状況</h2>
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr>
+                <th>書籍</th>
+                <th>予約日時</th>
+                <th>状態</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="reservation-list">
+        </tbody>
+    </table>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var loginUrl = /*[[@{/login}]]*/ '/login';
+        /*]]>*/
+
+        var STATUS_LABELS = {
+            WAITING: '待機中',
+            AVAILABLE: '貸出可能',
+            CANCELLED: 'キャンセル済み',
+            COMPLETED: '完了'
+        };
+
+        function renderLoans(loans) {
+            var $tbody = $('#loan-list');
+            $tbody.empty();
+            $.each(loans, function (i, loan) {
+                var $row = $('<tr>').attr('data-loan-id', loan.loanId);
+                $row.append($('<td>').text(loan.bookTitle));
+                $row.append($('<td>').text(loan.loanDate));
+                $row.append($('<td>').text(loan.dueDate));
+                $row.append($('<td>').text(loan.returnDate || ''));
+                $row.append($('<td>').text(loan.returnDate ? '返却済み' : '貸出中'));
+
+                var $actions = $('<td>');
+                if (!loan.returnDate) {
+                    $actions.append($('<button>').attr('type', 'button').addClass('return-button').text('返却'));
+                }
+                $row.append($actions);
+
+                $tbody.append($row);
+            });
+        }
+
+        function renderReservations(reservations) {
+            var $tbody = $('#reservation-list');
+            $tbody.empty();
+            $.each(reservations, function (i, reservation) {
+                var $row = $('<tr>').attr('data-reservation-id', reservation.reservationId);
+                $row.append($('<td>').text(reservation.bookTitle));
+                $row.append($('<td>').text(reservation.reservedAt));
+                $row.append($('<td>').text(STATUS_LABELS[reservation.status] || reservation.status));
+
+                var $actions = $('<td>');
+                if (reservation.status === 'WAITING' || reservation.status === 'AVAILABLE') {
+                    $actions.append($('<button>').attr('type', 'button').addClass('cancel-button').text('キャンセル'));
+                }
+                $row.append($actions);
+
+                $tbody.append($row);
+            });
+        }
+
+        function handleLoadError(xhr) {
+            $('#page-error').empty();
+            if (xhr.status === 401) {
+                $('#page-error').append('ログインが必要です。 ');
+                $('#page-error').append($('<a>').attr('href', loginUrl).text('ログインへ'));
+            } else {
+                var message = (xhr.responseJSON && xhr.responseJSON.message) || '読み込みに失敗しました';
+                $('#page-error').text(message);
+            }
+        }
+
+        function loadLoans() {
+            $.ajax({
+                url: '/api/loans/me',
+                type: 'GET',
+                success: function (loans) {
+                    renderLoans(loans);
+                },
+                error: function (xhr) {
+                    handleLoadError(xhr);
+                }
+            });
+        }
+
+        function loadReservations() {
+            $.ajax({
+                url: '/api/reservations/me',
+                type: 'GET',
+                success: function (reservations) {
+                    renderReservations(reservations);
+                },
+                error: function (xhr) {
+                    handleLoadError(xhr);
+                }
+            });
+        }
+
+        $(function () {
+            loadLoans();
+            loadReservations();
+
+            $('#loan-list').on('click', '.return-button', function () {
+                var $row = $(this).closest('tr');
+                var loanId = $row.data('loan-id');
+                $.ajax({
+                    url: '/api/loans/' + loanId + '/return',
+                    type: 'POST',
+                    success: function () {
+                        loadLoans();
+                        loadReservations();
+                    },
+                    error: function (xhr) {
+                        var message = (xhr.responseJSON && xhr.responseJSON.message) || '返却に失敗しました';
+                        alert(message);
+                    }
+                });
+            });
+
+            $('#reservation-list').on('click', '.cancel-button', function () {
+                if (!confirm('予約をキャンセルしてよろしいですか？')) {
+                    return;
+                }
+                var $row = $(this).closest('tr');
+                var reservationId = $row.data('reservation-id');
+                $.ajax({
+                    url: '/api/reservations/' + reservationId + '/cancel',
+                    type: 'POST',
+                    success: function () {
+                        loadReservations();
+                    },
+                    error: function (xhr) {
+                        var message = (xhr.responseJSON && xhr.responseJSON.message) || 'キャンセルに失敗しました';
+                        alert(message);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

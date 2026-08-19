@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import _Project.Mita.entity.Book;
 import _Project.Mita.entity.Category;
-import _Project.Mita.form.BookForm;
+import _Project.Mita.form.BookRequest;
 import _Project.Mita.repository.BookRepository;
 import _Project.Mita.repository.CategoryRepository;
 
@@ -25,8 +25,8 @@ public class BookService {
     }
 
     @Transactional(readOnly = true)
-    public List<Book> findAll() {
-        return bookRepository.findByIsDeletedFalse();
+    public List<Book> search(String keyword, Long categoryId) {
+        return bookRepository.search(keyword, categoryId);
     }
 
     @Transactional(readOnly = true)
@@ -35,15 +35,15 @@ public class BookService {
                 .orElseThrow(() -> new NoSuchElementException("書籍が見つかりません: id=" + bookId));
     }
 
-    public Book create(BookForm form) {
+    public Book create(BookRequest request) {
         Book book = new Book();
-        applyForm(book, form);
+        applyRequest(book, request);
         return bookRepository.save(book);
     }
 
-    public Book update(Long bookId, BookForm form) {
+    public Book update(Long bookId, BookRequest request) {
         Book book = findById(bookId);
-        applyForm(book, form);
+        applyRequest(book, request);
         return bookRepository.save(book);
     }
 
@@ -53,18 +53,18 @@ public class BookService {
         bookRepository.save(book);
     }
 
-    private void applyForm(Book book, BookForm form) {
-        book.setTitle(form.getTitle());
-        book.setAuthor(form.getAuthor());
-        book.setIsbn(form.getIsbn());
-        book.setTotalCopies(form.getTotalCopies());
-        book.setAvailableCopies(form.getAvailableCopies());
-        book.setDescription(form.getDescription());
-        book.setPublishedDate(form.getPublishedDate());
+    private void applyRequest(Book book, BookRequest request) {
+        book.setTitle(request.title());
+        book.setAuthor(request.author());
+        book.setIsbn(request.isbn());
+        book.setTotalCopies(request.totalCopies());
+        book.setAvailableCopies(request.availableCopies());
+        book.setDescription(request.description());
+        book.setPublishedDate(request.publishedDate());
 
-        if (form.getCategoryId() != null) {
-            Category category = categoryRepository.findById(form.getCategoryId())
-                    .orElseThrow(() -> new NoSuchElementException("カテゴリが見つかりません: id=" + form.getCategoryId()));
+        if (request.categoryId() != null) {
+            Category category = categoryRepository.findById(request.categoryId())
+                    .orElseThrow(() -> new NoSuchElementException("カテゴリが見つかりません: id=" + request.categoryId()));
             book.setCategory(category);
         } else {
             book.setCategory(null);

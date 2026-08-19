@@ -3,25 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <title>カテゴリ登録・編集</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
     <h1 th:text="${categoryForm.categoryId} != null ? 'カテゴリ編集' : 'カテゴリ登録'"></h1>
 
-    <form th:action="${categoryForm.categoryId} != null
-                ? @{/admin/categories/{id}/edit(id=${categoryForm.categoryId})}
-                : @{/admin/categories/new}"
-          th:object="${categoryForm}" method="post">
+    <p id="form-error" style="color: red;"></p>
 
-        <input type="hidden" th:field="*{categoryId}" />
+    <form id="category-form" th:object="${categoryForm}">
+
+        <input type="hidden" id="categoryId" th:field="*{categoryId}" />
 
         <div>
             <label for="categoryName">カテゴリ名</label>
             <input type="text" id="categoryName" th:field="*{categoryName}" />
-            <span th:if="${#fields.hasErrors('categoryName')}" th:errors="*{categoryName}" style="color: red;"></span>
+            <span id="categoryName-error" style="color: red;"></span>
         </div>
 
         <button type="submit">保存</button>
         <a th:href="@{/admin/categories}">一覧に戻る</a>
     </form>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var listUrl = /*[[@{/admin/categories}]]*/ '/admin/categories';
+        var apiBaseUrl = /*[[@{/api/categories}]]*/ '/api/categories';
+        /*]]>*/
+
+        $(function () {
+            $('#category-form').on('submit', function (e) {
+                e.preventDefault();
+
+                $('#form-error').text('');
+                $('#categoryName-error').text('');
+
+                var categoryId = $('#categoryId').val();
+                var data = JSON.stringify({
+                    categoryName: $('#categoryName').val()
+                });
+
+                var url = categoryId ? apiBaseUrl + '/' + categoryId : apiBaseUrl;
+                var method = categoryId ? 'PUT' : 'POST';
+
+                $.ajax({
+                    url: url,
+                    type: method,
+                    contentType: 'application/json',
+                    data: data,
+                    success: function () {
+                        window.location.href = listUrl;
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 400 && xhr.responseJSON) {
+                            var fieldErrors = xhr.responseJSON.fieldErrors || {};
+                            $.each(fieldErrors, function (field, message) {
+                                $('#' + field + '-error').text(message);
+                            });
+                        } else {
+                            var message = (xhr.responseJSON && xhr.responseJSON.message) || '保存に失敗しました';
+                            $('#form-error').text(message);
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

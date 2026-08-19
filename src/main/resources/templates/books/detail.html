@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>書籍詳細</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body>
+    <p><a th:href="@{/}">検索に戻る</a></p>
+
+    <p id="load-error" style="color: red;"></p>
+    <p id="action-message" style="color: green;"></p>
+    <p id="action-error" style="color: red;"></p>
+
+    <div id="book-detail"></div>
+
+    <div id="book-actions"></div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var bookId = /*[[${bookId}]]*/ 0;
+        var loginUrl = /*[[@{/login}]]*/ '/login';
+        /*]]>*/
+
+        var currentUser = null;
+
+        function loadAuthStatus(callback) {
+            $.ajax({
+                url: '/api/auth/me',
+                type: 'GET',
+                success: function (data, textStatus, xhr) {
+                    currentUser = (xhr.status === 204) ? null : data;
+                    callback();
+                },
+                error: function () {
+                    currentUser = null;
+                    callback();
+                }
+            });
+        }
+
+        function loadBook() {
+            $('#load-error').text('');
+            $.ajax({
+                url: '/api/books/' + bookId,
+                type: 'GET',
+                success: function (book) {
+                    renderBook(book);
+                    renderActions(book);
+                },
+                error: function (xhr) {
+                    var message = (xhr.responseJSON && xhr.responseJSON.message) || '書籍情報の取得に失敗しました';
+                    $('#load-error').text(message);
+                }
+            });
+        }
+
+        function renderBook(book) {
+            var $detail = $('#book-detail');
+            $detail.empty();
+            $detail.append($('<h1>').text(book.title));
+            $detail.append($('<p>').text('著者：' + (book.author || '')));
+            $detail.append($('<p>').text('ISBN：' + (book.isbn || '')));
+            $detail.append($('<p>').text('カテゴリ：' + (book.categoryName || '')));
+            $detail.append($('<p>').text('出版日：' + (book.publishedDate || '')));
+            $detail.append($('<p>').text('総冊数：' + book.totalCopies));
+            $detail.append($('<p>').text('貸出可能数：' + book.availableCopies));
+            $detail.append($('<p>').text(book.description || ''));
+        }
+
+        function renderActions(book) {
+            var $actions = $('#book-actions');
+            $actions.empty();
+
+            if (!currentUser) {
+                $actions.append($('<p>').append(
+                    $('<a>').attr('href', loginUrl).text('ログインすると貸出・予約ができます')
+                ));
+                return;
+            }
+
+            if (book.availableCopies > 0) {
+                $actions.append($('<button>').attr('type', 'button').attr('id', 'loan-button').text('貸出する'));
+            } else {
+                $actions.append($('<button>').attr('type', 'button').attr('id', 'reserve-button').text('予約する'));
+            }
+        }
+
+        function clearMessages() {
+            $('#action-message').text('');
+            $('#action-error').text('');
+        }
+
+        $(function () {
+            loadAuthStatus(loadBook);
+
+            $(document).on('click', '#loan-button', function () {
+                clearMessages();
+                $.ajax({
+                    url: '/api/loans',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ bookId: bookId }),
+                    success: function () {
+                        $('#action-message').text('貸出しました');
+                        loadBook();
+                    },
+                    error: function (xhr) {
+                        var message = (xhr.responseJSON && xhr.responseJSON.message) || '貸出に失敗しました';
+                        $('#action-error').text(message);
+                    }
+                });
+            });
+
+            $(document).on('click', '#reserve-button', function () {
+                clearMessages();
+                $.ajax({
+                    url: '/api/reservations',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ bookId: bookId }),
+                    success: function () {
+                        $('#action-message').text('予約しました');
+                        loadBook();
+                    },
+                    error: function (xhr) {
+                        var message = (xhr.responseJSON && xhr.responseJSON.message) || '予約に失敗しました';
+                        $('#action-error').text(message);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

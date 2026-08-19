@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import _Project.Mita.entity.Category;
-import _Project.Mita.form.CategoryForm;
+import _Project.Mita.form.CategoryRequest;
 import _Project.Mita.repository.CategoryRepository;
 
 @Service
@@ -31,15 +31,15 @@ public class CategoryService {
                 .orElseThrow(() -> new NoSuchElementException("カテゴリが見つかりません: id=" + categoryId));
     }
 
-    public Category create(CategoryForm form) {
+    public Category create(CategoryRequest request) {
         Category category = new Category();
-        category.setCategoryName(form.getCategoryName());
+        category.setCategoryName(request.categoryName());
         return categoryRepository.save(category);
     }
 
-    public Category update(Long categoryId, CategoryForm form) {
+    public Category update(Long categoryId, CategoryRequest request) {
         Category category = findById(categoryId);
-        category.setCategoryName(form.getCategoryName());
+        category.setCategoryName(request.categoryName());
         return categoryRepository.save(category);
     }
 

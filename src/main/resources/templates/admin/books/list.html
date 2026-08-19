@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>書籍管理</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
     <h1>書籍管理</h1>
 
-    <p th:if="${message}" th:text="${message}" style="color: green;"></p>
+    <p id="message" style="color: green;"></p>
 
     <p><a th:href="@{/admin/categories}">カテゴリ管理へ</a></p>
 
@@ -27,25 +28,69 @@
                 <th>操作</th>
             </tr>
         </thead>
-        <tbody>
-            <tr th:each="book : ${books}">
-                <td th:text="${book.bookId}"></td>
-                <td th:text="${book.title}"></td>
-                <td th:text="${book.author}"></td>
-                <td th:text="${book.isbn}"></td>
-                <td th:text="${book.category != null ? book.category.categoryName : ''}"></td>
-                <td th:text="${book.totalCopies}"></td>
-                <td th:text="${book.availableCopies}"></td>
-                <td th:text="${book.publishedDate}"></td>
-                <td>
-                    <a th:href="@{/admin/books/{id}/edit(id=${book.bookId})}">編集</a>
-                    <form th:action="@{/admin/books/{id}/delete(id=${book.bookId})}" method="post" style="display:inline;"
-                          onsubmit="return confirm('削除してよろしいですか？');">
-                        <button type="submit">削除</button>
-                    </form>
-                </td>
-            </tr>
+        <tbody id="book-list">
         </tbody>
     </table>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var editUrlBase = /*[[@{/admin/books/}]]*/ '/admin/books/';
+        /*]]>*/
+
+        function renderBooks(books) {
+            var $tbody = $('#book-list');
+            $tbody.empty();
+            $.each(books, function (i, book) {
+                var $row = $('<tr>').attr('data-book-id', book.bookId);
+                $row.append($('<td>').text(book.bookId));
+                $row.append($('<td>').text(book.title));
+                $row.append($('<td>').text(book.author));
+                $row.append($('<td>').text(book.isbn));
+                $row.append($('<td>').text(book.categoryName));
+                $row.append($('<td>').text(book.totalCopies));
+                $row.append($('<td>').text(book.availableCopies));
+                $row.append($('<td>').text(book.publishedDate));
+
+                var $actions = $('<td>');
+                $actions.append($('<a>').attr('href', editUrlBase + book.bookId + '/edit').text('編集'));
+                $actions.append(' ');
+                $actions.append($('<button>').attr('type', 'button').addClass('delete-button').text('削除'));
+
+                $row.append($actions);
+                $tbody.append($row);
+            });
+        }
+
+        function loadBooks() {
+            $.getJSON('/api/books', function (data) {
+                renderBooks(data);
+            });
+        }
+
+        $(function () {
+            loadBooks();
+
+            $('#book-list').on('click', '.delete-button', function () {
+                if (!confirm('削除してよろしいですか？')) {
+                    return;
+                }
+                var $row = $(this).closest('tr');
+                var bookId = $row.data('book-id');
+
+                $.ajax({
+                    url: '/api/books/' + bookId,
+                    type: 'DELETE',
+                    success: function () {
+                        $row.remove();
+                        $('#message').text('書籍を削除しました');
+                    },
+                    error: function (xhr) {
+                        var message = (xhr.responseJSON && xhr.responseJSON.message) || '削除に失敗しました';
+                        alert(message);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

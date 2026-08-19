@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>会員登録</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body>
+    <h1>会員登録</h1>
+
+    <p id="form-error" style="color: red;"></p>
+
+    <form id="register-form">
+        <div>
+            <label for="name">氏名</label>
+            <input type="text" id="name" />
+            <span id="name-error" style="color: red;"></span>
+        </div>
+
+        <div>
+            <label for="email">メールアドレス</label>
+            <input type="email" id="email" />
+            <span id="email-error" style="color: red;"></span>
+        </div>
+
+        <div>
+            <label for="password">パスワード</label>
+            <input type="password" id="password" />
+            <span id="password-error" style="color: red;"></span>
+        </div>
+
+        <button type="submit">登録</button>
+        <a th:href="@{/login}">ログインへ</a>
+    </form>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var loginUrl = /*[[@{/login}]]*/ '/login';
+        /*]]>*/
+
+        $(function () {
+            $('#register-form').on('submit', function (e) {
+                e.preventDefault();
+
+                $('#form-error').text('');
+                $('#register-form span[id$="-error"]').text('');
+
+                var data = JSON.stringify({
+                    name: $('#name').val(),
+                    email: $('#email').val(),
+                    password: $('#password').val()
+                });
+
+                $.ajax({
+                    url: '/api/auth/register',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: data,
+                    success: function () {
+                        window.location.href = loginUrl;
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 400 && xhr.responseJSON) {
+                            var fieldErrors = xhr.responseJSON.fieldErrors || {};
+                            $.each(fieldErrors, function (field, message) {
+                                $('#' + field + '-error').text(message);
+                            });
+                        } else {
+                            var message = (xhr.responseJSON && xhr.responseJSON.message) || '登録に失敗しました';
+                            $('#form-error').text(message);
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
