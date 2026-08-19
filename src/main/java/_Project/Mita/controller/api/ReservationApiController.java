@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import _Project.Mita.entity.User;
 import _Project.Mita.form.ReservationRequest;
+import _Project.Mita.response.AdminReservationResponse;
 import _Project.Mita.response.ReservationResponse;
 import _Project.Mita.service.ReservationService;
 import _Project.Mita.service.SessionUserService;
@@ -52,5 +53,17 @@ public class ReservationApiController {
         return reservationService.findMyReservations(user).stream()
                 .map(ReservationResponse::from)
                 .toList();
+    }
+
+    @GetMapping
+    public List<AdminReservationResponse> list() {
+        return reservationService.findAllForAdmin().stream()
+                .map(AdminReservationResponse::from)
+                .toList();
+    }
+
+    @PostMapping("/{id}/admin-cancel")
+    public ReservationResponse adminCancel(@PathVariable("id") Long id) {
+        return ReservationResponse.from(reservationService.adminCancel(id));
     }
 }

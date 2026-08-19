@@ -3,6 +3,8 @@ package _Project.Mita.service;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,8 +27,13 @@ public class BookService {
     }
 
     @Transactional(readOnly = true)
-    public List<Book> search(String keyword, Long categoryId) {
-        return bookRepository.search(keyword, categoryId);
+    public Page<Book> search(String keyword, Long categoryId, Pageable pageable) {
+        return bookRepository.search(keyword, categoryId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Book> findAllForExport() {
+        return bookRepository.findByIsDeletedFalse();
     }
 
     @Transactional(readOnly = true)

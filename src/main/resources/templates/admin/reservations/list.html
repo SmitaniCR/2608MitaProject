@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>予約管理</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script th:src="@{/js/csrf.js}"></script>
+</head>
+<body>
+    <h1>予約管理</h1>
+
+    <p id="message" style="color: green;"></p>
+
+    <p>
+        <a th:href="@{/admin/categories}">カテゴリ管理へ</a> |
+        <a th:href="@{/admin/books}">書籍管理へ</a> |
+        <a th:href="@{/admin/loans}">貸出管理へ</a> |
+        <a th:href="@{/admin/users}">ユーザー管理へ</a>
+    </p>
+
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>書籍</th>
+                <th>利用者</th>
+                <th>予約日時</th>
+                <th>状態</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="reservation-list">
+        </tbody>
+    </table>
+
+    <script th:inline="javascript">
+        var STATUS_LABELS = {
+            WAITING: '待機中',
+            AVAILABLE: '貸出可能',
+            CANCELLED: 'キャンセル済み',
+            COMPLETED: '完了'
+        };
+
+        function renderReservations(reservations) {
+            var $tbody = $('#reservation-list');
+            $tbody.empty();
+            $.each(reservations, function (i, reservation) {
+                var $row = $('<tr>').attr('data-reservation-id', reservation.reservationId);
+                $row.append($('<td>').text(reservation.reservationId));
+                $row.append($('<td>').text(reservation.bookTitle));
+                $row.append($('<td>').text(reservation.userName));
+                $row.append($('<td>').text(reservation.reservedAt));
+                $row.append($('<td>').text(STATUS_LABELS[reservation.status] || reservation.status));
+
+                var $actions = $('<td>');
+                if (reservation.status === 'WAITING' || reservation.status === 'AVAILABLE') {
+                    $actions.append($('<button>').attr('type', 'button').addClass('cancel-button').text('キャンセル'));
+                }
+                $row.append($actions);
+
+                $tbody.append($row);
+            });
+        }
+
+        function loadReservations() {
+            $.getJSON('/api/reservations', function (data) {
+                renderReservations(data);
+            });
+        }
+
+        $(function () {
+            loadReservations();
+
+            $('#reservation-list').on('click', '.cancel-button', function () {
+                if (!confirm('この予約をキャンセルしてよろしいですか？')) {
+                    return;
+                }
+                var $row = $(this).closest('tr');
+                var reservationId = $row.data('reservation-id');
+
+                $.ajax({
+                    url: '/api/reservations/' + reservationId + '/admin-cancel',
+                    type: 'POST',
+                    success: function () {
+                        $('#message').text('予約をキャンセルしました');
+                        loadReservations();
+                    },
+                    error: function (xhr) {
+                        var message = (xhr.responseJSON && xhr.responseJSON.message) || 'キャンセルに失敗しました';
+                        alert(message);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

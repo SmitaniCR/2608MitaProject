@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ユーザー管理</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script th:src="@{/js/csrf.js}"></script>
+</head>
+<body>
+    <h1>ユーザー管理</h1>
+
+    <p id="message" style="color: green;"></p>
+
+    <p>
+        <a th:href="@{/admin/categories}">カテゴリ管理へ</a> |
+        <a th:href="@{/admin/books}">書籍管理へ</a> |
+        <a th:href="@{/admin/loans}">貸出管理へ</a> |
+        <a th:href="@{/admin/reservations}">予約管理へ</a>
+    </p>
+
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>氏名</th>
+                <th>メールアドレス</th>
+                <th>管理者</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="user-list">
+        </tbody>
+    </table>
+
+    <script th:inline="javascript">
+        function renderUsers(users) {
+            var $tbody = $('#user-list');
+            $tbody.empty();
+            $.each(users, function (i, user) {
+                var $row = $('<tr>').attr('data-user-id', user.userId);
+                $row.append($('<td>').text(user.userId));
+                $row.append($('<td>').text(user.name));
+                $row.append($('<td>').text(user.email));
+                $row.append($('<td>').text(user.isAdmin ? 'はい' : 'いいえ'));
+
+                var $actions = $('<td>');
+                if (user.isAdmin) {
+                    $actions.append($('<button>').attr('type', 'button').addClass('demote-button').text('一般ユーザーに戻す'));
+                } else {
+                    $actions.append($('<button>').attr('type', 'button').addClass('promote-button').text('管理者にする'));
+                }
+                $actions.append(' ');
+                $actions.append($('<button>').attr('type', 'button').addClass('delete-button').text('削除'));
+                $row.append($actions);
+
+                $tbody.append($row);
+            });
+        }
+
+        function loadUsers() {
+            $.getJSON('/api/users', function (data) {
+                renderUsers(data);
+            });
+        }
+
+        $(function () {
+            loadUsers();
+
+            $('#user-list').on('click', '.promote-button, .demote-button', function () {
+                var makeAdmin = $(this).hasClass('promote-button');
+                if (!confirm(makeAdmin ? 'このユーザーを管理者にしますか？' : 'このユーザーを一般ユーザーに戻しますか？')) {
+                    return;
+                }
+                var $row = $(this).closest('tr');
+                var userId = $row.data('user-id');
+
+                $.ajax({
+                    url: '/api/users/' + userId + '/role',
+                    type: 'PATCH',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ isAdmin: makeAdmin }),
+                    success: function () {
+                        $('#message').text('権限を更新しました');
+                        loadUsers();
+                    },
+                    error: function (xhr) {
+                        var message = (xhr.responseJSON && xhr.responseJSON.message) || '権限の更新に失敗しました';
+                        alert(message);
+                    }
+                });
+            });
+
+            $('#user-list').on('click', '.delete-button', function () {
+                if (!confirm('このユーザーを削除してよろしいですか？')) {
+                    return;
+                }
+                var $row = $(this).closest('tr');
+                var userId = $row.data('user-id');
+
+                $.ajax({
+                    url: '/api/users/' + userId,
+                    type: 'DELETE',
+                    success: function () {
+                        $row.remove();
+                        $('#message').text('ユーザーを削除しました');
+                    },
+                    error: function (xhr) {
+                        var message = (xhr.responseJSON && xhr.responseJSON.message) || '削除に失敗しました';
+                        alert(message);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

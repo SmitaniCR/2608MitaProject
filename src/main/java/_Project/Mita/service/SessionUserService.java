@@ -3,34 +3,24 @@ package _Project.Mita.service;
 import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import _Project.Mita.entity.User;
 import _Project.Mita.exception.NotAuthenticatedException;
+import _Project.Mita.security.UserPrincipal;
 
 @Service
 public class SessionUserService {
 
-    public static final String SESSION_KEY_LOGIN_USER_ID = "loginUserId";
-
-    private final UserService userService;
-
-    public SessionUserService(UserService userService) {
-        this.userService = userService;
-    }
-
     public Optional<User> findCurrentUser(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session == null) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
             return Optional.empty();
         }
-        Long userId = (Long) session.getAttribute(SESSION_KEY_LOGIN_USER_ID);
-        if (userId == null) {
-            return Optional.empty();
-        }
-        return userService.findByIdOptional(userId);
+        return Optional.of(principal.getUser());
     }
 
     public User requireCurrentUser(HttpServletRequest request) {

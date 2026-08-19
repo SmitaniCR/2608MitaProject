@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>貸出管理</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script th:src="@{/js/csrf.js}"></script>
+    <style>
+        tr.overdue { background-color: #ffe0e0; }
+        .overdue-label { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>貸出管理</h1>
+
+    <p id="message" style="color: green;"></p>
+
+    <p>
+        <a th:href="@{/admin/categories}">カテゴリ管理へ</a> |
+        <a th:href="@{/admin/books}">書籍管理へ</a> |
+        <a th:href="@{/admin/reservations}">予約管理へ</a> |
+        <a th:href="@{/admin/users}">ユーザー管理へ</a>
+    </p>
+
+    <p><a th:href="@{/api/loans/export}">CSVダウンロード</a></p>
+
+    <label>
+        <input type="checkbox" id="overdue-only-checkbox">
+        延滞中のみ表示
+    </label>
+
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>書籍</th>
+                <th>利用者</th>
+                <th>貸出日</th>
+                <th>返却期限</th>
+                <th>返却日</th>
+                <th>状態</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="loan-list">
+        </tbody>
+    </table>
+
+    <script th:inline="javascript">
+        function renderLoans(loans) {
+            var $tbody = $('#loan-list');
+            $tbody.empty();
+            $.each(loans, function (i, loan) {
+                var $row = $('<tr>').attr('data-loan-id', loan.loanId);
+                if (loan.overdue) {
+                    $row.addClass('overdue');
+                }
+                $row.append($('<td>').text(loan.loanId));
+                $row.append($('<td>').text(loan.bookTitle));
+                $row.append($('<td>').text(loan.userName));
+                $row.append($('<td>').text(loan.loanDate));
+                $row.append($('<td>').text(loan.dueDate));
+                $row.append($('<td>').text(loan.returnDate || ''));
+
+                var $status = $('<td>');
+                if (loan.overdue) {
+                    $status.append($('<span>').addClass('overdue-label').text('延滞中'));
+                } else {
+                    $status.text(loan.returnDate ? '返却済み' : '貸出中');
+                }
+                $row.append($status);
+
+                var $actions = $('<td>');
+                if (!loan.returnDate) {
+                    $actions.append($('<button>').attr('type', 'button').addClass('return-button').text('返却'));
+                }
+                $row.append($actions);
+
+                $tbody.append($row);
+            });
+        }
+
+        function loadLoans() {
+            var overdueOnly = $('#overdue-only-checkbox').is(':checked');
+            $.getJSON('/api/loans', { overdueOnly: overdueOnly }, function (data) {
+                renderLoans(data);
+            });
+        }
+
+        $(function () {
+            loadLoans();
+
+            $('#overdue-only-checkbox').on('change', function () {
+                loadLoans();
+            });
+
+            $('#loan-list').on('click', '.return-button', function () {
+                if (!confirm('この貸出を返却済みにしてよろしいですか？')) {
+                    return;
+                }
+                var $row = $(this).closest('tr');
+                var loanId = $row.data('loan-id');
+
+                $.ajax({
+                    url: '/api/loans/' + loanId + '/admin-return',
+                    type: 'POST',
+                    success: function () {
+                        $('#message').text('返却処理が完了しました');
+                        loadLoans();
+                    },
+                    error: function (xhr) {
+                        var message = (xhr.responseJSON && xhr.responseJSON.message) || '返却処理に失敗しました';
+                        alert(message);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

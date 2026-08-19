@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <title>カテゴリ管理</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script th:src="@{/js/csrf.js}"></script>
 </head>
 <body>
     <h1>カテゴリ管理</h1>
 
     <p id="message" style="color: green;"></p>
 
-    <p><a th:href="@{/admin/books}">書籍管理へ</a></p>
+    <p>
+        <a th:href="@{/admin/books}">書籍管理へ</a> |
+        <a th:href="@{/admin/loans}">貸出管理へ</a> |
+        <a th:href="@{/admin/reservations}">予約管理へ</a> |
+        <a th:href="@{/admin/users}">ユーザー管理へ</a>
+    </p>
 
     <a th:href="@{/admin/categories/new}">新規登録</a>
 

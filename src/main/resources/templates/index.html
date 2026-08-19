@@ -4,6 +4,25 @@
     <meta charset="UTF-8">
     <title>蔵書検索</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script th:src="@{/js/csrf.js}"></script>
+    <style>
+        #suggest-wrapper { position: relative; display: inline-block; }
+        #suggest-list {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 300px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            background: #fff;
+            border: 1px solid #ccc;
+            z-index: 10;
+        }
+        #suggest-list li { padding: 4px 8px; cursor: pointer; }
+        #suggest-list li:hover { background: #eee; }
+    </style>
 </head>
 <body>
     <div id="auth-status"></div>
@@ -12,11 +31,25 @@
 
     <form id="search-form">
         <label for="keyword">キーワード</label>
-        <input type="text" id="keyword" placeholder="タイトル・著者名で検索" />
+        <span id="suggest-wrapper">
+            <input type="text" id="keyword" placeholder="タイトル・著者名で検索" autocomplete="off" />
+            <ul id="suggest-list"></ul>
+        </span>
 
         <label for="categoryId">カテゴリ</label>
         <select id="categoryId">
             <option value="">すべてのカテゴリ</option>
+        </select>
+
+        <label for="sortBy">並び替え</label>
+        <select id="sortBy">
+            <option value="title">タイトル順</option>
+            <option value="author">著者順</option>
+            <option value="publishedDate">出版日順</option>
+        </select>
+        <select id="sortDir">
+            <option value="asc">昇順</option>
+            <option value="desc">降順</option>
         </select>
 
         <button type="submit">検索</button>
@@ -35,6 +68,12 @@
         </tbody>
     </table>
 
+    <div id="pagination">
+        <button type="button" id="prev-page-button">前へ</button>
+        <span id="page-info"></span>
+        <button type="button" id="next-page-button">次へ</button>
+    </div>
+
     <script th:inline="javascript">
         /*<![CDATA[*/
         var loginUrl = /*[[@{/login}]]*/ '/login';
@@ -42,6 +81,10 @@
         var mypageUrl = /*[[@{/mypage}]]*/ '/mypage';
         var bookDetailUrlBase = /*[[@{/books/}]]*/ '/books/';
         /*]]>*/
+
+        var currentPage = 0;
+        var pageSize = 10;
+        var suggestTimer = null;
 
         function renderAuthStatus(user) {
             var $status = $('#auth-status');
@@ -99,8 +142,21 @@
             });
         }
 
+        function renderPagination(pageResult) {
+            var totalPages = pageResult.totalPages;
+            var currentDisplay = totalPages === 0 ? 0 : pageResult.page + 1;
+            $('#page-info').text(currentDisplay + ' / ' + totalPages + ' ページ（全' + pageResult.totalElements + '件）');
+            $('#prev-page-button').prop('disabled', pageResult.page <= 0);
+            $('#next-page-button').prop('disabled', pageResult.page >= totalPages - 1);
+        }
+
         function searchBooks() {
-            var params = {};
+            var params = {
+                page: currentPage,
+                size: pageSize,
+                sortBy: $('#sortBy').val(),
+                sortDir: $('#sortDir').val()
+            };
             var keyword = $('#keyword').val();
             var categoryId = $('#categoryId').val();
             if (keyword) {
@@ -109,8 +165,33 @@
             if (categoryId) {
                 params.categoryId = categoryId;
             }
-            $.getJSON('/api/books', params, function (books) {
-                renderBooks(books);
+            $.getJSON('/api/books', params, function (pageResult) {
+                renderBooks(pageResult.content);
+                renderPagination(pageResult);
+            });
+        }
+
+        function closeSuggestList() {
+            $('#suggest-list').hide().empty();
+        }
+
+        function renderSuggestions(suggestions) {
+            var $list = $('#suggest-list');
+            $list.empty();
+            if (!suggestions.length) {
+                $list.hide();
+                return;
+            }
+            $.each(suggestions, function (i, suggestion) {
+                var label = suggestion.title + (suggestion.author ? '（' + suggestion.author + '）' : '');
+                $list.append($('<li>').attr('data-book-id', suggestion.bookId).text(label));
+            });
+            $list.show();
+        }
+
+        function fetchSuggestions(keyword) {
+            $.getJSON('/api/books/suggest', { keyword: keyword }, function (suggestions) {
+                renderSuggestions(suggestions);
             });
         }
 
@@ -121,7 +202,51 @@
 
             $('#search-form').on('submit', function (e) {
                 e.preventDefault();
+                currentPage = 0;
+                closeSuggestList();
                 searchBooks();
+            });
+
+            $('#sortBy, #sortDir, #categoryId').on('change', function () {
+                currentPage = 0;
+                searchBooks();
+            });
+
+            $('#prev-page-button').on('click', function () {
+                if (currentPage > 0) {
+                    currentPage--;
+                    searchBooks();
+                }
+            });
+
+            $('#next-page-button').on('click', function () {
+                currentPage++;
+                searchBooks();
+            });
+
+            $('#keyword').on('input', function () {
+                var keyword = $(this).val();
+                if (suggestTimer) {
+                    clearTimeout(suggestTimer);
+                }
+                if (!keyword || keyword.length <= 1) {
+                    closeSuggestList();
+                    return;
+                }
+                suggestTimer = setTimeout(function () {
+                    fetchSuggestions(keyword);
+                }, 250);
+            });
+
+            $('#suggest-list').on('click', 'li', function () {
+                var bookId = $(this).data('book-id');
+                window.location.href = bookDetailUrlBase + bookId;
+            });
+
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('#suggest-wrapper').length) {
+                    closeSuggestList();
+                }
             });
 
             $(document).on('click', '#logout-button', function () {

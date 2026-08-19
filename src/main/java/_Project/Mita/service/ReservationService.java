@@ -3,6 +3,7 @@ package _Project.Mita.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,9 +61,13 @@ public class ReservationService {
         return reservationRepository.save(reservation);
     }
 
+    @Transactional(readOnly = true)
+    public List<Reservation> findAllForAdmin() {
+        return reservationRepository.findAllByOrderByReservedAtDesc();
+    }
+
     public Reservation cancel(User user, Long reservationId) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new NoSuchElementException("予約情報が見つかりません: id=" + reservationId));
+        Reservation reservation = getReservationOrThrow(reservationId);
 
         if (!reservation.getUser().getUserId().equals(user.getUserId())) {
             throw new ForbiddenOperationException("他のユーザーの予約は操作できません");
@@ -72,11 +77,34 @@ public class ReservationService {
         return reservationRepository.save(reservation);
     }
 
+    public Reservation adminCancel(Long reservationId) {
+        Reservation reservation = getReservationOrThrow(reservationId);
+        reservation.setStatus(ReservationStatus.CANCELLED);
+        return reservationRepository.save(reservation);
+    }
+
+    private Reservation getReservationOrThrow(Long reservationId) {
+        return reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new NoSuchElementException("予約情報が見つかりません: id=" + reservationId));
+    }
+
     public void promoteNextWaitingReservation(Long bookId) {
         reservationRepository.findFirstByBook_BookIdAndStatusOrderByReservedAtAsc(bookId, ReservationStatus.WAITING)
                 .ifPresent(reservation -> {
                     reservation.setStatus(ReservationStatus.AVAILABLE);
                     reservationRepository.save(reservation);
                 });
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Reservation> findAvailableReservation(Long bookId) {
+        return reservationRepository.findFirstByBook_BookIdAndStatusOrderByReservedAtAsc(
+                bookId, ReservationStatus.AVAILABLE);
+    }
+
+    public void completeReservation(Long reservationId) {
+        Reservation reservation = getReservationOrThrow(reservationId);
+        reservation.setStatus(ReservationStatus.COMPLETED);
+        reservationRepository.save(reservation);
     }
 }
