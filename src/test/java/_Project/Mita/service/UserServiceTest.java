@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -50,6 +51,16 @@ class UserServiceTest {
     void register_メールアドレス重複時にDuplicateEmailException() {
         UserRegisterRequest request = new UserRegisterRequest("利用者A", "user@example.com", "password123");
         when(userRepository.existsByEmailAndIsDeletedFalse(request.email())).thenReturn(true);
+
+        assertThrows(DuplicateEmailException.class, () -> userService.register(request));
+    }
+
+    @Test
+    void register_保存時にDataIntegrityViolationExceptionが発生するとDuplicateEmailExceptionに変換される() {
+        UserRegisterRequest request = new UserRegisterRequest("利用者A", "user@example.com", "password123");
+        when(userRepository.existsByEmailAndIsDeletedFalse(request.email())).thenReturn(false);
+        when(passwordEncoder.encode(request.password())).thenReturn("hashed-password");
+        when(userRepository.save(any(User.class))).thenThrow(new DataIntegrityViolationException("duplicate key"));
 
         assertThrows(DuplicateEmailException.class, () -> userService.register(request));
     }

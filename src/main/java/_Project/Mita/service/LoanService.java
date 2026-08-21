@@ -124,7 +124,11 @@ public class LoanService {
 
         Book book = loan.getBook();
         book.setAvailableCopies(book.getAvailableCopies() + 1);
-        bookRepository.save(book);
+        try {
+            bookRepository.saveAndFlush(book);
+        } catch (OptimisticLockingFailureException e) {
+            throw new ConcurrentUpdateException("他の操作と競合しました。もう一度お試しください");
+        }
 
         reservationService.promoteNextWaitingReservation(book.getBookId());
 

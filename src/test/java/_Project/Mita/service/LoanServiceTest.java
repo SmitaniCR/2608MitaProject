@@ -124,6 +124,20 @@ class LoanServiceTest {
     }
 
     @Test
+    void returnBook_楽観的ロック競合が発生するとConcurrentUpdateException() {
+        Loan loan = new Loan();
+        loan.setLoanId(100L);
+        loan.setBook(book);
+        loan.setUser(user);
+        loan.setLoanDate(LocalDate.now().minusDays(1));
+        loan.setDueDate(LocalDate.now().plusDays(13));
+        when(loanRepository.findById(loan.getLoanId())).thenReturn(Optional.of(loan));
+        when(bookRepository.saveAndFlush(book)).thenThrow(new OptimisticLockingFailureException("conflict"));
+
+        assertThrows(ConcurrentUpdateException.class, () -> loanService.returnBook(user, loan.getLoanId()));
+    }
+
+    @Test
     void returnBook_他人の貸出を返却しようとするとForbiddenOperationException() {
         User otherUser = new User();
         otherUser.setUserId(2L);

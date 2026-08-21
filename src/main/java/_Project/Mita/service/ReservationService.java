@@ -39,7 +39,7 @@ public class ReservationService {
     }
 
     public Reservation create(User user, ReservationRequest request) {
-        Book book = bookRepository.findById(request.bookId())
+        Book book = bookRepository.findByIdForUpdate(request.bookId())
                 .orElseThrow(() -> new NoSuchElementException("書籍が見つかりません: id=" + request.bookId()));
 
         if (book.getAvailableCopies() >= 1) {

@@ -54,7 +54,7 @@ class ReservationServiceTest {
 
     @Test
     void create_在庫0の書籍を予約できる() {
-        when(bookRepository.findById(book.getBookId())).thenReturn(Optional.of(book));
+        when(bookRepository.findByIdForUpdate(book.getBookId())).thenReturn(Optional.of(book));
         when(reservationRepository.findByBook_BookIdAndUser_UserIdAndStatusIn(book.getBookId(), user.getUserId(),
                 List.of(ReservationStatus.WAITING, ReservationStatus.AVAILABLE)))
                         .thenReturn(List.of());
@@ -71,7 +71,7 @@ class ReservationServiceTest {
     @Test
     void create_在庫がある書籍を予約しようとするとReservationNotAllowedException() {
         book.setAvailableCopies(1);
-        when(bookRepository.findById(book.getBookId())).thenReturn(Optional.of(book));
+        when(bookRepository.findByIdForUpdate(book.getBookId())).thenReturn(Optional.of(book));
 
         assertThrows(ReservationNotAllowedException.class,
                 () -> reservationService.create(user, new ReservationRequest(book.getBookId())));
@@ -79,7 +79,7 @@ class ReservationServiceTest {
 
     @Test
     void create_同じ本を重複して予約しようとするとReservationNotAllowedException() {
-        when(bookRepository.findById(book.getBookId())).thenReturn(Optional.of(book));
+        when(bookRepository.findByIdForUpdate(book.getBookId())).thenReturn(Optional.of(book));
         Reservation existing = new Reservation();
         existing.setBook(book);
         existing.setUser(user);
