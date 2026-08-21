@@ -1,4 +1,4 @@
-package _Project.Mita.controller;
+package _Project.Mita.controller.view;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

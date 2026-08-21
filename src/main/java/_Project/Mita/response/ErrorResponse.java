@@ -1,4 +1,4 @@
-package _Project.Mita.exception;
+package _Project.Mita.response;
 
 import java.util.Map;
 

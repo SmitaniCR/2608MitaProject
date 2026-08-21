@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import _Project.Mita.entity.Reservation;
-import _Project.Mita.entity.ReservationStatus;
+import _Project.Mita.entity.enu.ReservationStatus;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 

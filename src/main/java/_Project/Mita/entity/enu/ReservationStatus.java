@@ -1,4 +1,4 @@
-package _Project.Mita.entity;
+package _Project.Mita.entity.enu;
 
 public enum ReservationStatus {
     WAITING,

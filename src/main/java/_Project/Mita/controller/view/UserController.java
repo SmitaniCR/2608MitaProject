@@ -1,15 +1,15 @@
-package _Project.Mita.controller;
+package _Project.Mita.controller.view;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/admin/loans")
-public class LoanController {
+@RequestMapping("/admin/users")
+public class UserController {
 
     @GetMapping
     public String list() {
-        return "admin/loans/list";
+        return "admin/users/list";
     }
 }

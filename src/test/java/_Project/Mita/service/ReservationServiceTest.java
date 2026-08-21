@@ -16,8 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import _Project.Mita.entity.Book;
 import _Project.Mita.entity.Reservation;
-import _Project.Mita.entity.ReservationStatus;
 import _Project.Mita.entity.User;
+import _Project.Mita.entity.enu.ReservationStatus;
 import _Project.Mita.exception.ForbiddenOperationException;
 import _Project.Mita.exception.ReservationNotAllowedException;
 import _Project.Mita.form.ReservationRequest;
