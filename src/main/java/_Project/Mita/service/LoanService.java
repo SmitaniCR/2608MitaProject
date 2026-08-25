@@ -19,7 +19,6 @@ import _Project.Mita.exception.ConcurrentUpdateException;
 import _Project.Mita.exception.DuplicateLoanException;
 import _Project.Mita.exception.ForbiddenOperationException;
 import _Project.Mita.exception.ReservationHeldException;
-import _Project.Mita.form.LoanRequest;
 import _Project.Mita.repository.BookRepository;
 import _Project.Mita.repository.LoanRepository;
 
@@ -54,10 +53,10 @@ public class LoanService {
 	/**
 	 * 貸出情報を作成しDBに登録させるメソッド。
 	 * 
-	 * User情報と書籍情報、予約情報も取得して貸出可能かを確認している。
+	 * 予約情報を取得し貸出可能かを確認している。
 	 * 
 	 * @param user 貸出するユーザー
-	 * @param request 借りたい書籍のID（NotNull）をもつリクエスト
+	 * @param bookId 借りたい書籍のID
 	 * @return 作成された貸出情報を表すLoanエンティティ
 	 * @throws NoSuchElementException Bookから貸出予定の本情報が取得できなかったとき
 	 * @throws ReservationHeldException 確保予約が他人名義で存在し、貸出情報が作成できないとき
@@ -65,9 +64,9 @@ public class LoanService {
 	 * @throws DuplicateLoanException すでにその本が貸し出されていたとき
 	 * @throws ConcurrentUpdateException 書き換えた情報の競合を検知し、貸出情報作成が中断したとき
 	 */
-	public Loan create(User user, LoanRequest request) {
-		Book book = bookRepository.findById(request.bookId())
-				.orElseThrow(() -> new NoSuchElementException("書籍が見つかりません: id=" + request.bookId()));
+	public Loan create(User user, Long bookId ) {
+		Book book = bookRepository.findById(bookId)
+				.orElseThrow(() -> new NoSuchElementException("書籍が見つかりません: id=" + bookId));
 
 		Optional<Reservation> availableReservation = reservationService.findAvailableReservation(book.getBookId());
 

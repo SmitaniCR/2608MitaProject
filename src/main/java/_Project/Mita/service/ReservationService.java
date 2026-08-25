@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import _Project.Mita.entity.Book;
 import _Project.Mita.entity.Reservation;
 import _Project.Mita.entity.User;
-import _Project.Mita.entity.enu.ReservationStatus;
+import _Project.Mita.entity.enums.ReservationStatus;
 import _Project.Mita.exception.ForbiddenOperationException;
 import _Project.Mita.exception.ReservationNotAllowedException;
 import _Project.Mita.form.ReservationRequest;

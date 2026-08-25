@@ -50,7 +50,7 @@ public class LoanApiController {
      * 
      * @param request 借りたい書籍のID（NotNull）をもつリクエスト
      * @param servletRequest セッション情報をもつリクエスト
-     * @return LoanResponse型に整えられた貸出情報
+     * @return 登録された貸出情報
      * @throws NotAuthenticatedException ログインされていなかったとき
      * @throws NoSuchElementException Bookから貸出予定の本情報が取得できなかったとき
      * @throws ReservationHeldException 確保予約が他人名義で存在し、貸出情報が作成できないとき
@@ -62,7 +62,7 @@ public class LoanApiController {
     @ResponseStatus(HttpStatus.CREATED)
     public LoanResponse create(@Valid @RequestBody LoanRequest request, HttpServletRequest servletRequest) {
         User user = sessionUserService.requireCurrentUser(servletRequest);
-        return LoanResponse.from(loanService.create(user, request));
+        return LoanResponse.from(loanService.create(user, request.bookId()));
     }
 
     /**
@@ -70,7 +70,7 @@ public class LoanApiController {
      * 
      * @param id 返却したい貸出情報ID
      * @param servletRequest セッション情報をもつリクエスト
-     * @return LoanResponse型に整えられた返却情報
+     * @return 登録された返却情報
      * @throws NotAuthenticatedException ログインされていなかったとき
      * @throws NoSuchElementException 指定された貸出記録が存在しないとき
      * @throws ForbiddenOperationException 操作ユーザーと貸出情報のユーザーが異なるとき
@@ -116,7 +116,7 @@ public class LoanApiController {
      * 管理者による返却登録API(ADMIN権限が必要)
      * 
      * @param id 貸出情報のID
-     * @return LoanResponse型に整えられた返却情報
+     * @return 登録された返却情報
      * @throws NoSuchElementException 指定された貸出記録が存在しないとき
      * @throws AlreadyReturnedException すでに返却情報が登録されていたとき
      * @throws ConcurrentUpdateException 書き換えた情報の競合を検知し、貸出情報作成が中断したとき

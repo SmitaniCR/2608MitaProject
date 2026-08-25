@@ -1,9 +1,8 @@
 package _Project.Mita.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -20,14 +19,13 @@ import _Project.Mita.entity.Book;
 import _Project.Mita.entity.Loan;
 import _Project.Mita.entity.Reservation;
 import _Project.Mita.entity.User;
-import _Project.Mita.entity.enu.ReservationStatus;
+import _Project.Mita.entity.enums.ReservationStatus;
 import _Project.Mita.exception.AlreadyReturnedException;
 import _Project.Mita.exception.BookNotAvailableException;
 import _Project.Mita.exception.ConcurrentUpdateException;
 import _Project.Mita.exception.DuplicateLoanException;
 import _Project.Mita.exception.ForbiddenOperationException;
 import _Project.Mita.exception.ReservationHeldException;
-import _Project.Mita.form.LoanRequest;
 import _Project.Mita.repository.BookRepository;
 import _Project.Mita.repository.LoanRepository;
 
@@ -68,7 +66,7 @@ class LoanServiceTest {
         when(loanRepository.findByBook_BookIdAndUser_UserIdAndReturnDateIsNull(book.getBookId(), user.getUserId()))
                 .thenReturn(Optional.empty());
 
-        Loan loan = loanService.create(user, new LoanRequest(book.getBookId()));
+        Loan loan = loanService.create(user, book.getBookId());
 
         assertThat(book.getAvailableCopies()).isEqualTo(0);
         assertThat(loan.getBook()).isEqualTo(book);
@@ -82,7 +80,7 @@ class LoanServiceTest {
         when(bookRepository.findById(book.getBookId())).thenReturn(Optional.of(book));
 
         assertThrows(BookNotAvailableException.class,
-                () -> loanService.create(user, new LoanRequest(book.getBookId())));
+                () -> loanService.create(user, book.getBookId()));
     }
 
     @Test
@@ -92,7 +90,7 @@ class LoanServiceTest {
                 .thenReturn(Optional.of(new Loan()));
 
         assertThrows(DuplicateLoanException.class,
-                () -> loanService.create(user, new LoanRequest(book.getBookId())));
+                () -> loanService.create(user, book.getBookId()));
     }
 
     @Test
@@ -103,7 +101,7 @@ class LoanServiceTest {
         when(bookRepository.saveAndFlush(book)).thenThrow(new OptimisticLockingFailureException("conflict"));
 
         assertThrows(ConcurrentUpdateException.class,
-                () -> loanService.create(user, new LoanRequest(book.getBookId())));
+                () -> loanService.create(user, book.getBookId()));
     }
 
     @Test
@@ -182,7 +180,7 @@ class LoanServiceTest {
                 .thenReturn(Optional.of(availableReservation));
 
         assertThrows(ReservationHeldException.class,
-                () -> loanService.create(user, new LoanRequest(book.getBookId())));
+                () -> loanService.create(user, book.getBookId()));
     }
 
     @Test
@@ -199,7 +197,7 @@ class LoanServiceTest {
         when(loanRepository.findByBook_BookIdAndUser_UserIdAndReturnDateIsNull(book.getBookId(), user.getUserId()))
                 .thenReturn(Optional.empty());
 
-        Loan loan = loanService.create(user, new LoanRequest(book.getBookId()));
+        Loan loan = loanService.create(user, book.getBookId());
 
         assertThat(loan.getUser()).isEqualTo(user);
         assertThat(book.getAvailableCopies()).isEqualTo(0);

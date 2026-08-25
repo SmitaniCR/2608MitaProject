@@ -1,8 +1,8 @@
 package _Project.Mita.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import _Project.Mita.entity.Book;
 import _Project.Mita.entity.Reservation;
 import _Project.Mita.entity.User;
-import _Project.Mita.entity.enu.ReservationStatus;
+import _Project.Mita.entity.enums.ReservationStatus;
 import _Project.Mita.exception.ForbiddenOperationException;
 import _Project.Mita.exception.ReservationNotAllowedException;
 import _Project.Mita.form.ReservationRequest;
