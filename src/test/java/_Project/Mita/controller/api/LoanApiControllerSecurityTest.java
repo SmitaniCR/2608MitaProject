@@ -41,7 +41,7 @@ class LoanApiControllerSecurityTest {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
-	//正常系テストの追加（WithMockUserはSessionUserServiceをデコイできない）
+	//正常系テストの追加（WithMockUserはSessionUserService(Principal)をデコイできない）
 	@Test
 	@Transactional // 実DBを汚さないようロールバックさせる
 	void 一般ユーザーが在庫のある書籍を貸出できる() throws Exception {

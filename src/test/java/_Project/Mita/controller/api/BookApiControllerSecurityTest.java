@@ -1,16 +1,13 @@
 package _Project.Mita.controller.api;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,6 +21,36 @@ class BookApiControllerSecurityTest {
 
     private static final String INVALID_BOOK_JSON = "{}";
     private static final String INVALID_CATEGORY_JSON = "{}";
+    
+    
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void 書籍登録時に複数項目が違反しているとすべてfieldErrorsに入る() throws Exception {
+        // titleがnull、かつ totalCopiesがマイナス(-1)の不正なJSON
+        String multipleErrorsJson = "{\"title\":null, \"totalCopies\":-1}";
+
+        mockMvc.perform(post("/api/books")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(multipleErrorsJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("入力内容に誤りがあります"))
+                .andExpect(jsonPath("$.fieldErrors.title").value("タイトルは必須です"))// 2つのエラーが両方ともMapに入っていることを検証
+                .andExpect(jsonPath("$.fieldErrors.totalCopies").value("総冊数は0以上で入力してください"));
+    }
+
+    
+    @Test
+	@WithMockUser(roles = "USER")
+	void 書籍登録時にtitleがnullだと400が返る() throws Exception {//@Validのエラー検証
+		mockMvc.perform(post("/api/books")
+				.with(csrf())
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"title\":null}")) // titleがnullのJSON
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("入力内容に誤りがあります"))
+				.andExpect(jsonPath("$.fieldErrors.title").value("タイトルは必須です"));
+	}
 
     @Test
     void 未ログインで書籍登録にアクセスすると401() throws Exception {
@@ -67,7 +94,7 @@ class BookApiControllerSecurityTest {
                 .andExpect(status().isBadRequest());
     }
 
-    @Test
+    @Test   //後でcategoryApiControllerTestを作成し移動
     void 未ログインでカテゴリ登録にアクセスすると401() throws Exception {
         mockMvc.perform(post("/api/categories").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)

@@ -33,3 +33,6 @@ build/
 .vscode/
 
 application-local.properties
+
+### learning-springboot (個人の学習進捗) ###
+.claude/state/
