@@ -20,7 +20,6 @@ class BookApiControllerSecurityTest {
     private MockMvc mockMvc;
 
     private static final String INVALID_BOOK_JSON = "{}";
-    private static final String INVALID_CATEGORY_JSON = "{}";
     
     
     @Test
@@ -91,48 +90,6 @@ class BookApiControllerSecurityTest {
         mockMvc.perform(post("/api/books").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(INVALID_BOOK_JSON))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test   //後でcategoryApiControllerTestを作成し移動
-    void 未ログインでカテゴリ登録にアクセスすると401() throws Exception {
-        mockMvc.perform(post("/api/categories").with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(INVALID_CATEGORY_JSON))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(roles = "USER")
-    void 一般ユーザーがカテゴリ登録にアクセスすると403() throws Exception {
-        mockMvc.perform(post("/api/categories").with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(INVALID_CATEGORY_JSON))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    @WithMockUser(roles = "USER")
-    void 一般ユーザーがカテゴリ更新にアクセスすると403() throws Exception {
-        mockMvc.perform(put("/api/categories/999999").with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(INVALID_CATEGORY_JSON))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    @WithMockUser(roles = "USER")
-    void 一般ユーザーがカテゴリ削除にアクセスすると403() throws Exception {
-        mockMvc.perform(delete("/api/categories/999999").with(csrf()))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    @WithMockUser(roles = "ADMIN")
-    void 管理者はカテゴリ登録APIに到達できる() throws Exception {
-        mockMvc.perform(post("/api/categories").with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(INVALID_CATEGORY_JSON))
                 .andExpect(status().isBadRequest());
     }
 

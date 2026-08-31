@@ -1,15 +1,16 @@
 package _Project.Mita.repository;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Sort;
 
 import _Project.Mita.entity.Book;
 import _Project.Mita.entity.Category;
+import _Project.Mita.response.CategorySummaryResponse;
 
 @DataJpaTest
 public class BookRepositoryTest {
@@ -30,6 +32,13 @@ public class BookRepositoryTest {
 	    private Category createCategory(String name) {
 	        Category category = new Category();
 	        category.setCategoryName(name);
+	        return entityManager.persist(category);
+	    }
+	    
+	    private Category createCategory(String name, boolean isDeleted) {
+	        Category category = new Category();
+	        category.setCategoryName(name);
+	        category.setDeleted(isDeleted); 
 	        return entityManager.persist(category);
 	    }
 
@@ -47,8 +56,7 @@ public class BookRepositoryTest {
 	    // テストケース 
 
 	    @Test
-	    @DisplayName("削除されていない書籍のみが取得できること")
-	    void findByIsDeletedFalse_shouldReturnOnlyActiveBooks() {
+	    void 削除されていない書籍のみが取得できること() {
 	        // 1. 準備
 	        Category category = createCategory("プログラミング");
 	        createBook("Java入門", "著者A", category, false); // 取得対象
@@ -66,8 +74,7 @@ public class BookRepositoryTest {
 	    }
 
 	    @Test
-	    @DisplayName("キーワードとカテゴリの両方で絞り込めること")
-	    void search_shouldFilterByKeywordAndCategory() {
+	    void キーワードとカテゴリの両方で絞り込めること() {
 	        // 1. 準備
 	        Category javaCategory = createCategory("Java");
 	        Category phpCategory = createCategory("PHP");
@@ -94,8 +101,7 @@ public class BookRepositoryTest {
 	    }
 
 	    @Test
-	    @DisplayName("search：キーワードがnullの場合はカテゴリのみで絞り込めること")
-	    void search_shouldFilterByCategoryOnly_whenKeywordIsNull() {
+	    void キーワードがnullの場合はカテゴリのみで絞り込めること() {
 	        // 1. 準備
 	        Category category = createCategory("デザイン");
 	        createBook("UI設計", "著者X", category, false);
@@ -116,8 +122,7 @@ public class BookRepositoryTest {
 	    }
 
 	    @Test
-	    @DisplayName("著者名のキーワード部分一致でも取得できること")
-	    void search_shouldFilterByAuthorKeyword() {
+	    void 著者名のキーワード部分一致でも取得できること() {
 	        // 1. 準備
 	        createBook("書籍A", "山田太郎", null, false); // 取得対象
 	        createBook("書籍B", "佐藤次郎", null, false); // 除外対象
@@ -136,8 +141,7 @@ public class BookRepositoryTest {
 	    }
 	    
 	    @Test
-	    @DisplayName("絞り込みなしで全件取得できること")
-	    void search_shouldReturnAll_whenKeyIsAllNull() {
+	    void 絞り込みなしで全件取得できること() {
 	        // 1. 準備
 	        createBook("書籍B", "山田太郎", null, false); // 取得対象
 	        createBook("書籍A", "佐藤次郎", null, false); // 取得対象
@@ -178,8 +182,7 @@ public class BookRepositoryTest {
 	    
 
 	    @Test
-	    @DisplayName("指定したIDの書籍が悲観的ロック付きで正しく取得できること")
-	    void findByIdForUpdate_shouldReturnBook() {
+	    void 指定したIDの書籍が悲観的ロック付きで正しく取得できること() {
 	        // 1. 準備
 	        Book book = createBook("排他制御テスト", "著者", null, false);
 
@@ -194,4 +197,88 @@ public class BookRepositoryTest {
 	        assertThat(result.get().getTitle()).isEqualTo("排他制御テスト");
 	    }
 
+	    @Test
+	    void 古いバージョンのまま更新しようとするとOptimisticLockingFailureExceptionが発生する() {
+	        // 1. 準備
+	        Book book = createBook("排他制御テスト", null, null, false);
+	        entityManager.flush();
+	        Long bookId = book.getBookId();
+
+	        entityManager.clear(); // キャッシュを空に
+
+	        //古いバージョンのまま持ち続けるインスタンス
+	        Book bookForUserA = bookRepository.findById(bookId).orElseThrow();
+
+	        entityManager.clear(); //再度キャッシュを空に
+
+	        //先に更新・保存してversionを進めてしまう
+	        Book bookForUserB = bookRepository.findById(bookId).orElseThrow();
+	        bookForUserB.setAvailableCopies(bookForUserB.getAvailableCopies() - 1);
+	        bookRepository.saveAndFlush(bookForUserB); // ここでDB上のversionが1つ進む
+
+	        // 2. 実行
+	        bookForUserA.setAvailableCopies(bookForUserA.getAvailableCopies() - 1);
+
+	        // 3. 検証
+	        assertThrows(OptimisticLockingFailureException.class,
+	                () -> bookRepository.saveAndFlush(bookForUserA));
+	    }
+	    
+	    @Test
+	    void カテゴリ別に書籍数と在庫数が正しく集計されること() {
+	        // 1. 準備
+	        // カテゴリA: 通常データ
+	        Category catNormal = createCategory("教本", false);
+	        createBook("Java入門", "太郎", catNormal, false);
+	        createBook("Spring解説", "太郎", catNormal, false);
+
+	        // カテゴリB: 論理削除された書籍が含まれる
+	        Category catDeleted = createCategory("漫画", false);
+	        createBook("ワンピ", "次郎", catDeleted, false);
+	        createBook("なると", "次郎", catDeleted, true); 
+
+	        // カテゴリC: 書籍が1冊もない
+	        Category catNoBook = createCategory("新聞", false);
+
+	        // カテゴリD: カテゴリ自体が論理削除されている
+	        Category catNoCategory = createCategory("小説", true);
+	        createBook("ガレリオ", "三郎", catNoCategory, false);
+
+	        entityManager.flush();
+	        entityManager.clear();
+
+	        // 2. 実行
+	        List<CategorySummaryResponse> result = bookRepository.summarizeByCategory();
+
+	        // 3. 検証
+
+	        assertThat(result).hasSize(3);
+
+	 
+
+	        CategorySummaryResponse resA = result.stream()
+	                .filter(r -> r.categoryId().equals(catNormal.getCategoryId())).findFirst().orElseThrow();
+	        assertThat(resA.categoryName()).isEqualTo("教本");
+	        assertThat(resA.bookCount()).isEqualTo(2);      
+	        assertThat(resA.totalCopies()).isEqualTo(20);    
+
+	
+	        CategorySummaryResponse resB = result.stream()
+	                .filter(r -> r.categoryId().equals(catDeleted.getCategoryId())).findFirst().orElseThrow();
+	        assertThat(resB.categoryName()).isEqualTo("漫画");
+	        assertThat(resB.bookCount()).isEqualTo(1);      
+	        assertThat(resB.totalCopies()).isEqualTo(10);     
+
+
+	        CategorySummaryResponse resC = result.stream()
+	                .filter(r -> r.categoryId().equals(catNoBook.getCategoryId())).findFirst().orElseThrow();
+	        assertThat(resC.categoryName()).isEqualTo("新聞");
+	        assertThat(resC.bookCount()).isEqualTo(0);      
+	        assertThat(resC.totalCopies()).isEqualTo(0);    
+
+	
+	        boolean hasDeletedCategory = result.stream()
+	                .anyMatch(r -> r.categoryId().equals(catNoCategory.getCategoryId()));
+	        assertThat(hasDeletedCategory).isFalse();
+	    }
 }
