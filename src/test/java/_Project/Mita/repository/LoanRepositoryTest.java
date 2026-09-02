@@ -15,6 +15,7 @@ import _Project.Mita.entity.Book;
 import _Project.Mita.entity.Category;
 import _Project.Mita.entity.Loan;
 import _Project.Mita.entity.User;
+import _Project.Mita.response.MonthlyLoanCountView;
 
 @DataJpaTest
 class LoanRepositoryTest {
@@ -69,11 +70,11 @@ class LoanRepositoryTest {
 		LocalDate targetDate = LocalDate.of(2026, 8, 25);
 
 		// Loanデータの準備（1データ1行なので、データの条件比較がしやすい）
-		createLoan(book, user, targetDate, targetDate.minusDays(1), null); // 期待するデータ①：未返却（Null）かつ 期日超過（前日）
-		createLoan(book, user, targetDate, targetDate.minusDays(2), null); // 期待するデータ②：未返却（Null）かつ 期日超過（2日前） -> loan1より古いため、こちらが1番目に取得されるべき
-		createLoan(book, user, targetDate, targetDate.minusDays(1), targetDate.minusDays(1)); // 除外データ①：返却済（NotNull）かつ 期日超過
-		createLoan(book, user, targetDate, targetDate, null); // 除外データ②：未返却（Null）かつ 期日当日（Beforeに含まれない）
-		createLoan(book, user, targetDate, targetDate.plusDays(1), targetDate.plusDays(1)); // 除外データ③：返却済（NotNull）かつ 期日前
+		createLoan(book, user, targetDate, targetDate.minusDays(1), null); // 期待するデータ①
+		createLoan(book, user, targetDate, targetDate.minusDays(2), null); // 期待するデータ②
+		createLoan(book, user, targetDate, targetDate.minusDays(1), targetDate.minusDays(1)); // 除外データ①
+		createLoan(book, user, targetDate, targetDate, null); // 除外データ②
+		createLoan(book, user, targetDate, targetDate.plusDays(1), targetDate.plusDays(1)); // 除外データ③
 
 		// キャッシュをクリアして確実にDBから検証データを取得する
 		entityManager.flush();
@@ -88,7 +89,7 @@ class LoanRepositoryTest {
 		// 取得された件数が2件であることを検証
 		assertThat(result).hasSize(2);
 
-		// OrderByDueDateAsc（期日の昇順）の通り、より日付の古いloan2が先頭に来ていることを検証
+		// OrderByDueDateAscの通り、より日付の古いloan2が先頭に来ていることを検証
 		assertThat(result.get(0).getDueDate()).isEqualTo(targetDate.minusDays(2));
 		assertThat(result.get(1).getDueDate()).isEqualTo(targetDate.minusDays(1));
 
@@ -110,13 +111,13 @@ class LoanRepositoryTest {
 
 		LocalDate baseDate = LocalDate.of(2026, 8, 25);
 
-		// 期待するデータ①：ユーザーA、貸出日（新しい：当日） -> 降順なので先頭にくるべき
+		// 期待するデータ①
 		createLoan(book, userA, baseDate, baseDate.plusDays(7), null);
 
-		// 期待するデータ②：ユーザーA、貸出日（古い：前日）
+		// 期待するデータ②
 		createLoan(book, userA, baseDate.minusDays(1), baseDate.plusDays(6), null);
 
-		// 除外データ：ユーザーBの貸出データ
+		// 除外データ
 		createLoan(book, userB, baseDate, baseDate.plusDays(7), null);
 
 		entityManager.flush();
@@ -130,7 +131,7 @@ class LoanRepositoryTest {
 
 		assertThat(result).hasSize(2);
 
-		// 貸出日の降順（新しい順）の検証
+		// 貸出日の降順の検証
 		assertThat(result.get(0).getLoanDate()).isEqualTo(baseDate);
 		assertThat(result.get(1).getLoanDate()).isEqualTo(baseDate.minusDays(1));
 
@@ -155,16 +156,16 @@ class LoanRepositoryTest {
 
 		LocalDate baseDate = LocalDate.of(2026, 8, 25);
 
-		// 期待するデータ：本A × ユーザーA × 未返却(null)
+		// 期待するデータ
 		Loan loan1 = createLoan(bookA, userA, baseDate, baseDate.plusDays(7), null);
 
-		// 除外データ①：本A × ユーザーA × 返却済
+		// 除外データ
 		createLoan(bookA, userA, baseDate, baseDate.plusDays(7), baseDate.plusDays(1));
 
-		// 除外データ②：本B(違う本) × ユーザーA × 未返却
+		// 除外データ
 		createLoan(bookB, userA, baseDate, baseDate.plusDays(7), null);
 
-		// 除外データ③：本A × ユーザーB(違う人) × 未返却
+		// 除外データ
 		createLoan(bookA, userB, baseDate, baseDate.plusDays(7), null);
 
 		entityManager.flush();
@@ -192,13 +193,13 @@ class LoanRepositoryTest {
 
 		LocalDate baseDate = LocalDate.of(2026, 8, 25);
 
-		// 貸出日：昨日 (降順で2番目)
+		// 貸出日：昨日
 		createLoan(book, user, baseDate.minusDays(1), baseDate.plusDays(6), null);
 
-		// 貸出日：今日（一番新しい ➔ 降順で1番目）
+		// 貸出日：今日
 		createLoan(book, user, baseDate, baseDate.plusDays(7), null);
 
-		// 貸出日：一昨日（一番古い ➔ 降順で3番目）
+		// 貸出日：一昨日
 		createLoan(book, user, baseDate.minusDays(2), baseDate.plusDays(5), null);
 
 		entityManager.flush();
@@ -216,6 +217,55 @@ class LoanRepositoryTest {
 		assertThat(result.get(0).getLoanDate()).isEqualTo(baseDate); // 今日
 		assertThat(result.get(1).getLoanDate()).isEqualTo(baseDate.minusDays(1)); // 昨日
 		assertThat(result.get(2).getLoanDate()).isEqualTo(baseDate.minusDays(2)); // 一昨日
+	}
+
+	@Test
+	void 月ごとの貸出件数が集計され月の昇順で取得できること() {
+
+		// 1. 準備：親データ（マスターデータ）の作成
+		Category category = createCategory("test");
+		Book book = createBook("test", category);
+		User user = createUser("テスト", "a@a");
+
+		// 異なる月の貸出データを仕込む
+		// 2026年6月: 1件
+		createLoan(book, user, LocalDate.of(2026, 6, 15), LocalDate.of(2026, 7, 15), null);
+
+		// 2026, 8月: 2件 (順番をバラつかせるため、先に8月を登録)
+		createLoan(book, user, LocalDate.of(2026, 8, 1), LocalDate.of(2026, 9, 1), null);
+		createLoan(book, user, LocalDate.of(2026, 8, 20), LocalDate.of(2026, 9, 20), null);
+
+		// 2026年7月: 3件
+		createLoan(book, user, LocalDate.of(2026, 7, 10), LocalDate.of(2026, 8, 10), null);
+		createLoan(book, user, LocalDate.of(2026, 7, 20), LocalDate.of(2026, 8, 20), null);
+		createLoan(book, user, LocalDate.of(2026, 7, 25), LocalDate.of(2026, 8, 25), null);
+
+		// キャッシュをクリアして確実にDBから検証データを取得する
+		entityManager.flush();
+		entityManager.clear();
+
+		// 2. 実行：リポジトリメソッドの呼び出し
+		List<MonthlyLoanCountView> result = loanRepository.findMonthlyLoanCounts();
+
+		// 3. 検証：結果の確認
+		// 集計された月の種類が 3つ であることを検証
+		assertThat(result).hasSize(3);
+
+		// 件数の集計検証
+		// 1番目: 2026年06月 -> 1件
+		assertThat(result.get(0).getLoanYear()).isEqualTo(2026);
+		assertThat(result.get(0).getLoanMonth()).isEqualTo(6);
+		assertThat(result.get(0).getLoanCount()).isEqualTo(1);
+
+		// 2番目: 2026年07月 -> 3件
+		assertThat(result.get(1).getLoanYear()).isEqualTo(2026);
+		assertThat(result.get(1).getLoanMonth()).isEqualTo(7);
+		assertThat(result.get(1).getLoanCount()).isEqualTo(3);
+
+		// 3番目: 2026年08月 -> 2件
+		assertThat(result.get(2).getLoanYear()).isEqualTo(2026);
+		assertThat(result.get(2).getLoanMonth()).isEqualTo(8);
+		assertThat(result.get(2).getLoanCount()).isEqualTo(2);
 	}
 
 }

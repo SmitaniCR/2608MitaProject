@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>	
+<th:block th:fragment="head_fragment(title)">
+    <meta charset="UTF-8">
+    <title th:text="${title}">共通タイトル</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script th:src="@{/js/csrf.js}"></script>
+</head>
+<body>
+	<p th:fragment="message_fragment" id="message" style="color: green;"></p>
+</body>
+</html>

@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>カテゴリ登録・編集</title>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script th:src="@{/js/csrf.js}"></script>
-</head>
+	<head>
+			<th:block th:replace="~{CommonLayout :: head_fragment('カテゴリ登録・編集')}"></head>
+			</th:block>
 <body>
     <h1 th:text="${categoryForm.categoryId} != null ? 'カテゴリ編集' : 'カテゴリ登録'"></h1>
 

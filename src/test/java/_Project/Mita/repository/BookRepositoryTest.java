@@ -3,6 +3,7 @@ package _Project.Mita.repository;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +19,9 @@ import org.springframework.data.domain.Sort;
 
 import _Project.Mita.entity.Book;
 import _Project.Mita.entity.Category;
+import _Project.Mita.entity.Loan;
+import _Project.Mita.entity.User;
+import _Project.Mita.response.BookLoanRankingResponse;
 import _Project.Mita.response.CategorySummaryResponse;
 
 @DataJpaTest
@@ -52,7 +56,24 @@ public class BookRepositoryTest {
 	        book.setDeleted(isDeleted);
 	        return entityManager.persist(book);
 	    }
+	    
+	    private Loan createLoan(Book book, User user, LocalDate loanDate, LocalDate dueDate, LocalDate returnDate) {
+			Loan loan = new Loan();
+			loan.setBook(book);
+			loan.setUser(user);
+			loan.setLoanDate(loanDate);
+			loan.setDueDate(dueDate);
+			loan.setReturnDate(returnDate);
+			return entityManager.persist(loan);
+		}
 
+	    private User createDummyUser() {
+	        User user = new User();
+	        user.setName("kari");
+	        user.setEmail("a@a");
+	        user.setPassword("karipass");
+	        return entityManager.persist(user);
+	    }
 	    // テストケース 
 
 	    @Test
@@ -280,5 +301,95 @@ public class BookRepositoryTest {
 	        boolean hasDeletedCategory = result.stream()
 	                .anyMatch(r -> r.categoryId().equals(catNoCategory.getCategoryId()));
 	        assertThat(hasDeletedCategory).isFalse();
+	    }
+	    
+	    @Test
+	    void 貸出回数が多い順に本が並びかつ貸出が0回の本も結果に含まれること() {
+	        Category category = createCategory("WWW");
+	        User user = createDummyUser();
+
+	        Book bookA = createBook("2i", "A", category, false);
+	        Book bookB = createBook("1i", "B", category, false);
+	        Book bookC = createBook("3i", "C", category, false);
+
+	        // 貸出記録を作成
+	        createLoan(bookB, user, LocalDate.now(), LocalDate.now().plusDays(7), null);
+	        createLoan(bookB, user, LocalDate.now(), LocalDate.now().plusDays(7), null);
+	        createLoan(bookA, user, LocalDate.now(), LocalDate.now().plusDays(7), null);
+	        
+	        entityManager.flush();
+	        entityManager.clear();
+
+	        Pageable pageable = PageRequest.of(0, 10);
+
+	        List<BookLoanRankingResponse> result = bookRepository.findBookLoanRanking(pageable);
+
+	        // 1. 貸出0回の本も含めて3冊すべてが取得できていること
+	        assertThat(result).hasSize(3);
+
+	        // 2. 貸出回数の多い順に並んでいること
+	        BookLoanRankingResponse resA = result.get(0); 
+	        assertThat(resA.bookId()).isEqualTo(bookB.getBookId());
+	        assertThat(resA.title()).isEqualTo("1i");
+	        assertThat(resA.loanCount()).isEqualTo(2L);
+
+	        BookLoanRankingResponse resB = result.get(1); 
+	        assertThat(resB.bookId()).isEqualTo(bookA.getBookId());
+	        assertThat(resB.title()).isEqualTo("2i");
+	        assertThat(resB.loanCount()).isEqualTo(1L);
+
+	        BookLoanRankingResponse resC = result.get(2);
+	        assertThat(resC.bookId()).isEqualTo(bookC.getBookId());
+	        assertThat(resC.title()).isEqualTo("3i");
+	        assertThat(resC.loanCount()).isEqualTo(0L);
+	    }
+
+	    @Test
+	    void 論理削除済みの本は貸出記録があっても結果から除外されること() {
+	        Category category = createCategory("YYY");
+	        User user = createDummyUser();
+
+	        Book aruBook = createBook("aru hon", "A", category, false);
+	        Book naiBook = createBook("nai hon", "B", category, true);
+
+	        createLoan(aruBook, user, LocalDate.now(), LocalDate.now().plusDays(7), null);
+	        createLoan(naiBook, user, LocalDate.now(), LocalDate.now().plusDays(7), null);
+
+	        entityManager.flush();
+	        entityManager.clear();
+
+	        Pageable pageable = PageRequest.of(0, 10);
+
+	        List<BookLoanRankingResponse> result = bookRepository.findBookLoanRanking(pageable);
+
+	        assertThat(result).hasSize(1);
+	        
+	        BookLoanRankingResponse resA = result.get(0);
+	        assertThat(resA.bookId()).isEqualTo(aruBook.getBookId());
+	        assertThat(resA.title()).isEqualTo("aru hon");
+	    }
+	    
+	    @Test
+	    void Pageableのサイズ指定に従って実際に指定した件数だけ結果が返ること() {
+	        Category category = createCategory("ZZZ");
+	        User user = createDummyUser();
+
+	        Book book1 = createBook("1i", "A", category, false);
+	        Book book2 = createBook("2i", "A", category, false);
+	        Book book3 = createBook("3i", "A", category, false);
+
+	        createLoan(book1, user, LocalDate.now(), LocalDate.now().plusDays(7), null);
+	        createLoan(book2, user, LocalDate.now(), LocalDate.now().plusDays(7), null);
+	        createLoan(book3, user, LocalDate.now(), LocalDate.now().plusDays(7), null);
+
+	        entityManager.flush();
+	        entityManager.clear();
+
+	        // 最大2件だけ取得するように
+	        Pageable pageable = PageRequest.of(0, 2);
+
+	        List<BookLoanRankingResponse> result = bookRepository.findBookLoanRanking(pageable);
+
+	        assertThat(result).hasSize(2);
 	    }
 }

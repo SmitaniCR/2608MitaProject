@@ -1,15 +1,10 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>カテゴリ管理</title>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script th:src="@{/js/csrf.js}"></script>
-</head>
+	<head>
+			<th:block th:replace="~{CommonLayout :: head_fragment('カテゴリ管理')}"></head>
+			</th:block>
 <body>
     <h1>カテゴリ管理</h1>
-
-    <p id="message" style="color: green;"></p>
 
     <p>
         <a th:href="@{/admin/books}">書籍管理へ</a> |
@@ -19,7 +14,7 @@
     </p>
 
     <a th:href="@{/admin/categories/new}">新規登録</a>
-
+	<p id="message" style="color: green;"></p>
     <table border="1" cellpadding="5" cellspacing="0">
         <thead>
             <tr>
