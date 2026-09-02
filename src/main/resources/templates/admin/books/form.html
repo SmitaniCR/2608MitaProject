@@ -1,126 +1,166 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-	<head>
-			<th:block th:replace="~{CommonLayout :: head_fragment('書籍登録・編集')}"></head>
-			</th:block>
+
+<head>
+	<th:block th:replace="~{CommonLayout :: head_fragment('書籍登録・編集')}">
+	</th:block>
+</head>
+
+
 <body>
-    <h1 th:text="${bookForm.bookId} != null ? '書籍編集' : '書籍登録'"></h1>
+	<h1 th:text="${bookForm.bookId} != null ? '書籍編集' : '書籍登録'"></h1>
 
-    <p id="form-error" style="color: red;"></p>
+	<p id="form-error" style="color: red;"></p>
 
-    <form id="book-form" th:object="${bookForm}">
+	<form id="book-form" th:object="${bookForm}">
 
-        <input type="hidden" id="bookId" th:field="*{bookId}" />
+		<input type="hidden" id="bookId" th:field="*{bookId}" />
 
-        <div>
-            <label for="title">タイトル</label>
-            <input type="text" id="title" th:field="*{title}" />
-            <span id="title-error" style="color: red;"></span>
-        </div>
+		<div>
+			<label for="title">タイトル</label>
+			<input type="text" id="title" th:field="*{title}" />
+			<span id="title-error" style="color: red;"></span>
+		</div>
 
-        <div>
-            <label for="author">著者</label>
-            <input type="text" id="author" th:field="*{author}" />
-            <span id="author-error" style="color: red;"></span>
-        </div>
+		<div>
+			<label for="author">著者</label>
+			<input type="text" id="author" th:field="*{author}" />
+			<span id="author-error" style="color: red;"></span>
+		</div>
 
-        <div>
-            <label for="isbn">ISBN</label>
-            <input type="text" id="isbn" th:field="*{isbn}" />
-            <span id="isbn-error" style="color: red;"></span>
-        </div>
+		<div>
+			<label for="isbn">ISBN</label>
+			<input type="text" id="isbn" th:field="*{isbn}" />
+			<span id="isbn-error" style="color: red;"></span>
+		</div>
 
-        <div>
-            <label for="categoryId">カテゴリ</label>
-            <select id="categoryId" th:field="*{categoryId}">
-                <option value="">未選択</option>
-                <option th:each="category : ${categories}"
-                        th:value="${category.categoryId}"
-                        th:text="${category.categoryName}"></option>
-            </select>
-            <span id="categoryId-error" style="color: red;"></span>
-        </div>
+		<div>
+			<label for="categoryId">カテゴリ</label>
+			<select id="categoryId" th:field="*{categoryId}">
+				<option value="">未選択</option>
+				<option th:each="category : ${categories}" th:value="${category.categoryId}"
+					th:text="${category.categoryName}"></option>
+			</select>
+			<span id="categoryId-error" style="color: red;"></span>
+		</div>
 
-        <div>
-            <label for="totalCopies">総冊数</label>
-            <input type="number" id="totalCopies" th:field="*{totalCopies}" />
-            <span id="totalCopies-error" style="color: red;"></span>
-        </div>
+		<div>
+			<label for="totalCopies">総冊数</label>
+			<input type="number" id="totalCopies" th:field="*{totalCopies}" />
+			<span id="totalCopies-error" style="color: red;"></span>
+		</div>
 
-        <div>
-            <label for="availableCopies">貸出可能冊数</label>
-            <input type="number" id="availableCopies" th:field="*{availableCopies}" />
-            <span id="availableCopies-error" style="color: red;"></span>
-        </div>
+		<div>
+			<label for="availableCopies">貸出可能冊数</label>
+			<input type="number" id="availableCopies" th:field="*{availableCopies}" />
+			<span id="availableCopies-error" style="color: red;"></span>
+		</div>
 
-        <div>
-            <label for="publishedDate">出版日</label>
-            <input type="date" id="publishedDate" th:field="*{publishedDate}" />
-            <span id="publishedDate-error" style="color: red;"></span>
-        </div>
+		<div>
+			<label for="publishedDate">出版日</label>
+			<input type="date" id="publishedDate" th:field="*{publishedDate}" />
+			<span id="publishedDate-error" style="color: red;"></span>
+		</div>
+		
+		<div>
+		    <label for="coverImageFile">表紙画像</label>
+		    <input type="file" id="coverImageFile" accept="image/*" />
+		</div>
 
-        <div>
-            <label for="description">説明</label>
-            <textarea id="description" th:field="*{description}" rows="5" cols="40"></textarea>
-            <span id="description-error" style="color: red;"></span>
-        </div>
+		<div>
+			<label for="publishedDate">画像パス</label>
+			<input type="hidden" id="coverImagePath" th:field="*{coverImagePath}" />
+			<span id="coverImagePath-error" style="color: red;"></span>
+		</div>
 
-        <button type="submit">保存</button>
-        <a th:href="@{/admin/books}">一覧に戻る</a>
-    </form>
+		<div>
+			<label for="description">説明</label>
+			<textarea id="description" th:field="*{description}" rows="5" cols="40"></textarea>
+			<span id="description-error" style="color: red;"></span>
+		</div>
 
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        var listUrl = /*[[@{/admin/books}]]*/ '/admin/books';
-        var apiBaseUrl = /*[[@{/api/books}]]*/ '/api/books';
-        /*]]>*/
+		<button type="submit">保存</button>
+		<a th:href="@{/admin/books}">一覧に戻る</a>
+	</form>
 
-        $(function () {
-            $('#book-form').on('submit', function (e) {
-                e.preventDefault();
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		var listUrl = /*[[@{/admin/books}]]*/ '/admin/books';
+		var apiBaseUrl = /*[[@{/api/books}]]*/ '/api/books';
+		/*]]>*/
 
-                $('#form-error').text('');
-                $('#book-form span[id$="-error"]').text('');
+		$(function () {
+			$('#book-form').on('submit', function (e) {
+				e.preventDefault();
 
-                var bookId = $('#bookId').val();
-                var categoryId = $('#categoryId').val();
+				$('#form-error').text('');
+				$('#book-form span[id$="-error"]').text('');
 
-                var data = JSON.stringify({
-                    title: $('#title').val(),
-                    author: $('#author').val(),
-                    isbn: $('#isbn').val(),
-                    categoryId: categoryId ? Number(categoryId) : null,
-                    totalCopies: $('#totalCopies').val() ? Number($('#totalCopies').val()) : null,
-                    availableCopies: $('#availableCopies').val() ? Number($('#availableCopies').val()) : null,
-                    description: $('#description').val(),
-                    publishedDate: $('#publishedDate').val() || null
-                });
+				var bookId = $('#bookId').val();
+				var categoryId = $('#categoryId').val();
 
-                var url = bookId ? apiBaseUrl + '/' + bookId : apiBaseUrl;
-                var method = bookId ? 'PUT' : 'POST';
+				var data = JSON.stringify({
+					title: $('#title').val(),
+					author: $('#author').val(),
+					isbn: $('#isbn').val(),
+					categoryId: categoryId ? Number(categoryId) : null,
+					totalCopies: $('#totalCopies').val() ? Number($('#totalCopies').val()) : null,
+					availableCopies: $('#availableCopies').val() ? Number($('#availableCopies').val()) : null,
+					description: $('#description').val(),
+					publishedDate: $('#publishedDate').val() || null,
+					coverImagePath: $('#coverImagePath').val()
+				});
 
-                $.ajax({
-                    url: url,
-                    type: method,
-                    contentType: 'application/json',
-                    data: data,
-                    success: function () {
-                        window.location.href = listUrl;
-                    },
-                    error: function (xhr) {
-                        if (xhr.status === 400 && xhr.responseJSON) {
-                            var fieldErrors = xhr.responseJSON.fieldErrors || {};
-                            $.each(fieldErrors, function (field, message) {
-                                $('#' + field + '-error').text(message);
-                            });
-                        } else {
-                            var message = (xhr.responseJSON && xhr.responseJSON.message) || '保存に失敗しました';
-                            $('#form-error').text(message);
-                        }
-                    }
-                });
-            });
-        });
-    </script>
+				var url = bookId ? apiBaseUrl + '/' + bookId : apiBaseUrl;
+				var method = bookId ? 'PUT' : 'POST';
+
+				$.ajax({
+					url: url,
+					type: method,
+					contentType: 'application/json',
+					data: data,
+					success: function () {
+						window.location.href = listUrl;
+					},
+					error: function (xhr) {
+						if (xhr.status === 400 && xhr.responseJSON) {
+							var fieldErrors = xhr.responseJSON.fieldErrors || {};
+							$.each(fieldErrors, function (field, message) {
+								$('#' + field + '-error').text(message);
+							});
+						} else {
+							var message = (xhr.responseJSON && xhr.responseJSON.message) || '保存に失敗しました';
+							$('#form-error').text(message);
+						}
+					}
+				});
+			});
+		});
+		$('#coverImageFile').on('change', function () {
+		    var file = this.files[0];
+		    if (!file) {
+		        return;
+		    }
+
+		    var formData = new FormData();
+		    formData.append('file', file);  // 'file' はサーバー側の@RequestParam("file")と一致させる
+
+		    $.ajax({
+		        url: apiBaseUrl + '/cover-image',
+		        type: 'POST',
+		        data: formData,
+		        processData: false,
+		        contentType: false,
+		        success: function (response) {
+		            $('#coverImagePath').val(response.coverImagePath);
+		        },
+		        error: function (xhr) {
+		            var message = (xhr.responseJSON && xhr.responseJSON.message) || '画像のアップロードに失敗しました';
+		            alert(message);
+		        }
+		    });
+		});
+	</script>
 </body>
+
 </html>

@@ -3,16 +3,19 @@ package _Project.Mita.service;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import _Project.Mita.entity.Book;
 import _Project.Mita.entity.Category;
 import _Project.Mita.form.BookRequest;
 import _Project.Mita.repository.BookRepository;
 import _Project.Mita.repository.CategoryRepository;
+import _Project.Mita.utils.FileStorageUtils;
 
 @Service
 @Transactional
@@ -25,6 +28,9 @@ public class BookService {
         this.bookRepository = bookRepository;
         this.categoryRepository = categoryRepository;
     }
+    
+    @Value("${file.upload-dir}")
+	private String uploadDir;
 
     /**
      * 指定された条件に合致する書籍を検索・一覧取得する
@@ -116,6 +122,7 @@ public class BookService {
         book.setAvailableCopies(request.availableCopies());
         book.setDescription(request.description());
         book.setPublishedDate(request.publishedDate());
+        book.setCoverImagePath(request.coverImagePath());
 
         if (request.categoryId() != null) {
             Category category = categoryRepository.findById(request.categoryId())
@@ -124,5 +131,9 @@ public class BookService {
         } else {
             book.setCategory(null);
         }
+    }
+    
+    public String upImage(MultipartFile file) {
+    	return FileStorageUtils.saveImage(file, uploadDir);
     }
 }

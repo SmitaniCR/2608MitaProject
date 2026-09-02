@@ -62,7 +62,7 @@ class BookServiceTest {
         book.setCategory(category);
         book.setDeleted(false);
         
-        bookRequest = new BookRequest("新テスト","テス太","2222222222222",100L,10,10,"新テテテ",LocalDate.of(2026, 8, 27));
+        bookRequest = new BookRequest("新テスト","テス太","2222222222222",100L,10,10,"新テテテ",LocalDate.of(2026, 8, 27), null);
     }
 
     @Test
@@ -120,7 +120,7 @@ class BookServiceTest {
 
     @Test
     void create_カテゴリIDがnullのときカテゴリなしで登録できる() {
-    	BookRequest noCategoryRequest = new BookRequest("タイトル", "著者", "ISBN", null, 5, 5, "説明", LocalDate.now());
+    	BookRequest noCategoryRequest = new BookRequest("タイトル", "著者", "ISBN", null, 5, 5, "説明", LocalDate.now(), null);
         when(bookRepository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Book result = bookService.create(noCategoryRequest);

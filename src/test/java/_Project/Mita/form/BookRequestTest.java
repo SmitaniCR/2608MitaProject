@@ -37,7 +37,8 @@ public class BookRequestTest {
                 10,
                 10,
                 "あばばば",
-                LocalDate.of(2026, 1, 1)
+                LocalDate.of(2026, 1, 1),
+                null
         );
     }
 
@@ -56,7 +57,7 @@ public class BookRequestTest {
     void error_whenTitleIsNull() {
         // title以外は正常な値を入れる
         BookRequest request = new BookRequest(
-                null, "著者", "ISBN", 1L, 10, 10, "説明", LocalDate.now()
+                null, "著者", "ISBN", 1L, 10, 10, "説明", LocalDate.now(), null
         );
 
         Set<ConstraintViolation<BookRequest>> violations = validator.validate(request);
@@ -70,7 +71,7 @@ public class BookRequestTest {
     @DisplayName("必須系：タイトルが空文字の場合、エラーメッセージが返ること")
     void error_whenTitleIsEmpty() {
         BookRequest request = new BookRequest(
-                "", "著者", "ISBN", 1L, 10, 10, "説明", LocalDate.now()
+                "", "著者", "ISBN", 1L, 10, 10, "説明", LocalDate.now(), null
         );
 
         Set<ConstraintViolation<BookRequest>> violations = validator.validate(request);
@@ -84,7 +85,7 @@ public class BookRequestTest {
     @DisplayName("必須系：総冊数がnullの場合、エラーメッセージが返ること")
     void error_whenTotalCopiesIsNull() {
         BookRequest request = new BookRequest(
-                "タイトル", "著者", "ISBN", 1L, null, 10, "説明", LocalDate.now()
+                "タイトル", "著者", "ISBN", 1L, null, 10, "説明", LocalDate.now(), null
         );
 
         Set<ConstraintViolation<BookRequest>> violations = validator.validate(request);
@@ -98,7 +99,7 @@ public class BookRequestTest {
     @DisplayName("必須系：貸出可能冊数がnullの場合、エラーメッセージが返ること")
     void error_whenAvailableCopiesIsNull() {
         BookRequest request = new BookRequest(
-                "タイトル", "著者", "ISBN", 1L, 10, null, "説明", LocalDate.now()
+                "タイトル", "著者", "ISBN", 1L, 10, null, "説明", LocalDate.now(), null
         );
 
         Set<ConstraintViolation<BookRequest>> violations = validator.validate(request);
@@ -112,7 +113,7 @@ public class BookRequestTest {
     @DisplayName("境界値系：総冊数がマイナス値の場合、エラーメッセージが返ること")
     void error_whenTotalCopiesIsNegative() {
         BookRequest request = new BookRequest(
-                "タイトル", "著者", "ISBN", 1L, -1, 10, "説明", LocalDate.now()
+                "タイトル", "著者", "ISBN", 1L, -1, 10, "説明", LocalDate.now(), null
         );
 
         Set<ConstraintViolation<BookRequest>> violations = validator.validate(request);
@@ -126,7 +127,7 @@ public class BookRequestTest {
     @DisplayName("境界値系：総冊数がちょうど0の場合、バリデーションエラーが発生しないこと")
     void success_whenTotalCopiesIsZero() {
         BookRequest request = new BookRequest(
-                "タイトル", "著者", "ISBN", 1L, 0, 10, "説明", LocalDate.now()
+                "タイトル", "著者", "ISBN", 1L, 0, 10, "説明", LocalDate.now(), null
         );
         Set<ConstraintViolation<BookRequest>> violations = validator.validate(request);
         assertThat(violations).isEmpty();
@@ -136,7 +137,7 @@ public class BookRequestTest {
     @DisplayName("境界値系：貸出可能冊数がマイナス値の場合、エラーメッセージが返ること")
     void error_whenAvailableCopiesIsNegative() {
         BookRequest request = new BookRequest(
-                "タイトル", "著者", "ISBN", 1L, 10, -1, "説明", LocalDate.now()
+                "タイトル", "著者", "ISBN", 1L, 10, -1, "説明", LocalDate.now(), null
         );
 
         Set<ConstraintViolation<BookRequest>> violations = validator.validate(request);

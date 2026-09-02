@@ -2,12 +2,12 @@ package _Project.Mita.form;
 
 import java.time.LocalDate;
 
-import org.springframework.format.annotation.DateTimeFormat;
-
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import org.springframework.format.annotation.DateTimeFormat;
 
 public class BookForm {
 
@@ -37,8 +37,18 @@ public class BookForm {
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate publishedDate;
+    
+    private String coverImagePath;
 
-    public Long getBookId() {
+    public String getCoverImagePath() {
+		return coverImagePath;
+	}
+
+	public void setCoverImagePath(String coverImagePath) {
+		this.coverImagePath = coverImagePath;
+	}
+
+	public Long getBookId() {
         return bookId;
     }
 

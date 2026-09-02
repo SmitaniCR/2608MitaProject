@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,11 +22,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import _Project.Mita.entity.Book;
 import _Project.Mita.form.BookRequest;
 import _Project.Mita.response.BookResponse;
 import _Project.Mita.response.BookSuggestionResponse;
+import _Project.Mita.response.CoverImageUploadResponse;
 import _Project.Mita.response.PageResponse;
 import _Project.Mita.service.BookService;
 
@@ -169,5 +172,11 @@ public class BookApiController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable("id") Long id) {
 		bookService.delete(id);
+	}
+	
+	@PostMapping(value = "/cover-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public CoverImageUploadResponse uploadCoverImage(@RequestParam("file") MultipartFile file) {
+		return new CoverImageUploadResponse(bookService.upImage(file));
+		
 	}
 }

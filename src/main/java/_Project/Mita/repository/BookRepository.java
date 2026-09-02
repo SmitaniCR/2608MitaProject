@@ -33,7 +33,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 			+ "COUNT(b)," + "COALESCE(SUM(b.totalCopies),0L))"
 			+ " FROM Category c LEFT JOIN Book b ON b.category = c AND b.isDeleted = false"
 			+ " WHERE c.isDeleted = false"
-			+ " GROUP BY c.categoryId, c.categoryName")
+			+ " GROUP BY c.categoryId, c.categoryName") 
 	List<CategorySummaryResponse> summarizeByCategory();
 
 	@Query("SELECT new _Project.Mita.response.BookLoanRankingResponse(b.bookId, b.title, COUNT(l)) "

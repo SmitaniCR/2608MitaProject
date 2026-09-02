@@ -55,8 +55,19 @@ public class Book {
     @Version
     @Column(name = "version", nullable = false)
     private Long version;
+    
+    @Column(name = "cover_image_path")
+    private String coverImagePath;
 
-    public Book() {
+    public String getCoverImagePath() {
+		return coverImagePath;
+	}
+
+	public void setCoverImagePath(String coverImagePath) {
+		this.coverImagePath = coverImagePath;
+	}
+
+	public Book() {
     }
 
     public Long getBookId() {

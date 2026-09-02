@@ -14,7 +14,8 @@ public record BookResponse(
         Integer totalCopies,
         Integer availableCopies,
         String description,
-        LocalDate publishedDate) {
+        LocalDate publishedDate
+        ) {
 
     public static BookResponse from(Book book) {
         return new BookResponse(
