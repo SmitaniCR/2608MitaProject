@@ -1,4 +1,4 @@
-package _Project.Mita.utils;
+package _Project.Mita.repository;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -6,18 +6,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.stereotype.Repository;
 
 import _Project.Mita.exception.FileStorageException;
 
-public class FileStorageUtils {
+@Repository
+public class FileStorageRepository {
 	
-	private FileStorageUtils() {//鍵
-    }
+	//鍵は削除済み
 	
-	public static String saveImage(MultipartFile file, String uploadDir) {
+	public String saveImage(byte[] content, String originalFilename, String uploadDir) {
 		
-		String originalFilename = file.getOriginalFilename();
 		String extension = "";
         if (originalFilename != null && originalFilename.contains(".")) {
             extension = originalFilename.substring(originalFilename.lastIndexOf("."));
@@ -32,7 +31,7 @@ public class FileStorageUtils {
             Files.createDirectories(targetPath.getParent());
         }
         
-        file.transferTo(targetPath);
+        Files.write(targetPath, content);
         
         return "/images/" + newFilename;
         
