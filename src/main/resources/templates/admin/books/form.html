@@ -61,16 +61,22 @@
 			<input type="date" id="publishedDate" th:field="*{publishedDate}" />
 			<span id="publishedDate-error" style="color: red;"></span>
 		</div>
-		
+
 		<div>
-		    <label for="coverImageFile">表紙画像</label>
-		    <input type="file" id="coverImageFile" accept="image/*" />
+			<label for="coverImageFile">表紙画像</label>
+			<input type="file" id="coverImageFile" accept="image/*" />
 		</div>
 
 		<div>
-			<label for="publishedDate">画像パス</label>
+			<label for="coverImagePath">画像パス</label>
 			<input type="hidden" id="coverImagePath" th:field="*{coverImagePath}" />
 			<span id="coverImagePath-error" style="color: red;"></span>
+		</div>
+
+		<div>
+			<label for="publisher">出版者</label>
+			<input type="text" id="publisher" th:field="*{publisher}" />
+			<span id="publisher-error" style="color: red;"></span>
 		</div>
 
 		<div>
@@ -108,7 +114,8 @@
 					availableCopies: $('#availableCopies').val() ? Number($('#availableCopies').val()) : null,
 					description: $('#description').val(),
 					publishedDate: $('#publishedDate').val() || null,
-					coverImagePath: $('#coverImagePath').val()
+					coverImagePath: $('#coverImagePath').val(),
+					publisher: $('#publisher').val()
 				});
 
 				var url = bookId ? apiBaseUrl + '/' + bookId : apiBaseUrl;
@@ -137,28 +144,28 @@
 			});
 		});
 		$('#coverImageFile').on('change', function () {
-		    var file = this.files[0];
-		    if (!file) {
-		        return;
-		    }
+			var file = this.files[0];
+			if (!file) {
+				return;
+			}
 
-		    var formData = new FormData();
-		    formData.append('file', file);  // 'file' はサーバー側の@RequestParam("file")と一致させる
+			var formData = new FormData();
+			formData.append('file', file);  // 'file' はサーバー側の@RequestParam("file")と一致させる
 
-		    $.ajax({
-		        url: apiBaseUrl + '/cover-image',
-		        type: 'POST',
-		        data: formData,
-		        processData: false,
-		        contentType: false,
-		        success: function (response) {
-		            $('#coverImagePath').val(response.coverImagePath);
-		        },
-		        error: function (xhr) {
-		            var message = (xhr.responseJSON && xhr.responseJSON.message) || '画像のアップロードに失敗しました';
-		            alert(message);
-		        }
-		    });
+			$.ajax({
+				url: apiBaseUrl + '/cover-image',
+				type: 'POST',
+				data: formData,
+				processData: false,
+				contentType: false,
+				success: function (response) {
+					$('#coverImagePath').val(response.coverImagePath);
+				},
+				error: function (xhr) {
+					var message = (xhr.responseJSON && xhr.responseJSON.message) || '画像のアップロードに失敗しました';
+					alert(message);
+				}
+			});
 		});
 	</script>
 </body>

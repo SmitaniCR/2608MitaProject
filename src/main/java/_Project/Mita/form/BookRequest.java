@@ -33,6 +33,8 @@ public record BookRequest(
 
         LocalDate publishedDate,
         
-        String coverImagePath
+        String coverImagePath,
+        
+        String publisher
 		) {
 }

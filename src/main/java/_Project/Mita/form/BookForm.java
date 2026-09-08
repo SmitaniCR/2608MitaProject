@@ -39,8 +39,18 @@ public class BookForm {
     private LocalDate publishedDate;
     
     private String coverImagePath;
+    
+    private String publisher;
 
-    public String getCoverImagePath() {
+    public String getPublisher() {
+		return publisher;
+	}
+
+	public void setPublisher(String publisher) {
+		this.publisher = publisher;
+	}
+
+	public String getCoverImagePath() {
 		return coverImagePath;
 	}
 

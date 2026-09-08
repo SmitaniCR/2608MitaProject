@@ -48,6 +48,7 @@ public class BookController {
         form.setAvailableCopies(book.getAvailableCopies());
         form.setDescription(book.getDescription());
         form.setPublishedDate(book.getPublishedDate());
+        form.setPublisher(book.getPublisher());
         model.addAttribute("bookForm", form);
         model.addAttribute("categories", categoryService.findAll());
         return "admin/books/form";

@@ -58,8 +58,19 @@ public class Book {
     
     @Column(name = "cover_image_path")
     private String coverImagePath;
+    
+    @Column(name = "publisher")
+    private String publisher;
 
-    public String getCoverImagePath() {
+    public String getPublisher() {
+		return publisher;
+	}
+
+	public void setPublisher(String publisher) {
+		this.publisher = publisher;
+	}
+
+	public String getCoverImagePath() {
 		return coverImagePath;
 	}
 

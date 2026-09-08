@@ -128,6 +128,8 @@ public class BookService {
 		book.setDescription(request.description());
 		book.setPublishedDate(request.publishedDate());
 		book.setCoverImagePath(request.coverImagePath());
+		book.setPublisher(request.publisher());
+		
 
 		if (request.categoryId() != null) {
 			Category category = categoryRepository.findById(request.categoryId())
@@ -151,4 +153,6 @@ public class BookService {
 		}
 
 	}
+	
+	//ここに外部API通信メソッドを呼び出す機構を作成予定
 }
