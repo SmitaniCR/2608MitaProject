@@ -9,13 +9,13 @@ import org.springframework.web.client.RestClient;
 public class ExternalRestClientConfig {
 	
 	@Value("${app.api.base-url}")
-	private String exBook;
+	private String baseUrl;//TODO 仮名を使用中
 
     @Bean
     public RestClient externalBookRestClient() {
         
         return RestClient.builder()
-        		.baseUrl(exBook)
+        		.baseUrl(baseUrl)
         		.build();
     }
 }

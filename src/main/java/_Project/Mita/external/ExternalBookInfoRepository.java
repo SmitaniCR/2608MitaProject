@@ -25,7 +25,7 @@ public class ExternalBookInfoRepository {//外部情報をDBに見立て、情�
      * ISBNを条件に外部APIから書籍情報を取得
      *
      * @param isbn 書籍のISBNコード
-     * @return 書籍情報（見つからない場合は空のOptional）
+     * @return 書籍情報
      */
     public Optional<ExternalBookInfoResponse> fetchBookInfo(String isbn) {
         try {
@@ -34,9 +34,11 @@ public class ExternalBookInfoRepository {//外部情報をDBに見立て、情�
                     .retrieve()
                     .body(responseType);               
             
-            ExternalBookInfoResponse bookInfo = response.get(0);
+            if (response == null || response.isEmpty()) {
+                return Optional.empty();
+            }
+            return Optional.ofNullable(response.get(0));
 
-            return Optional.ofNullable(bookInfo);
         } catch (Exception e) {
         	throw new BookInfoFetchException("通信失敗: ", e);
         }

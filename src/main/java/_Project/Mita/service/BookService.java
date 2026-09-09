@@ -1,6 +1,7 @@
 package _Project.Mita.service;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -13,11 +14,17 @@ import org.springframework.web.multipart.MultipartFile;
 
 import _Project.Mita.entity.Book;
 import _Project.Mita.entity.Category;
+import _Project.Mita.exception.BookNotFoundException;
 import _Project.Mita.exception.FileStorageException;
+import _Project.Mita.external.BookSummary;
+import _Project.Mita.external.ExternalBookInfoRepository;
+import _Project.Mita.external.ExternalBookInfoResponse;
 import _Project.Mita.form.BookRequest;
 import _Project.Mita.repository.BookRepository;
 import _Project.Mita.repository.CategoryRepository;
 import _Project.Mita.repository.FileStorageRepository;
+import _Project.Mita.response.ExternalBookResponse;
+import _Project.Mita.utils.FlexibleDateParser;
 
 @Service
 @Transactional
@@ -26,12 +33,14 @@ public class BookService {
 	private final BookRepository bookRepository;
 	private final CategoryRepository categoryRepository;
 	private final FileStorageRepository fileStorageRepository;
+	private final ExternalBookInfoRepository bookInfoRepository;
 
 	public BookService(BookRepository bookRepository, CategoryRepository categoryRepository,
-			FileStorageRepository fileStorageRepository) {
+			FileStorageRepository fileStorageRepository, ExternalBookInfoRepository bookInfoRepository) {
 		this.bookRepository = bookRepository;
 		this.categoryRepository = categoryRepository;
 		this.fileStorageRepository = fileStorageRepository;
+		this.bookInfoRepository = bookInfoRepository;
 	}
 
 	@Value("${file.upload-dir}")
@@ -129,7 +138,6 @@ public class BookService {
 		book.setPublishedDate(request.publishedDate());
 		book.setCoverImagePath(request.coverImagePath());
 		book.setPublisher(request.publisher());
-		
 
 		if (request.categoryId() != null) {
 			Category category = categoryRepository.findById(request.categoryId())
@@ -142,17 +150,33 @@ public class BookService {
 
 	public String upImage(MultipartFile file) {
 		try {
-			
+
 			byte[] content = file.getBytes();
 			String originalFilename = file.getOriginalFilename();
 
 			return fileStorageRepository.saveImage(content, originalFilename, uploadDir);
-			
+
 		} catch (IOException e) {
 			throw new FileStorageException("アップロード失敗: ", e);
 		}
 
 	}
-	
+
 	//ここに外部API通信メソッドを呼び出す機構を作成予定
+	public ExternalBookResponse getBookInfo(String isbn) {
+		
+		ExternalBookInfoResponse externalBookInfoResponse = bookInfoRepository.fetchBookInfo(isbn)
+				.orElseThrow(() -> new BookNotFoundException("書籍情報が見つかりません: isbn=" + isbn));//404check
+		
+		BookSummary summary = externalBookInfoResponse.summary();//Responce から抜き出し
+
+		LocalDate publishedDate = FlexibleDateParser.parseFlexibleDate(summary.pubdate());//DateCheckを通す
+
+		return new ExternalBookResponse(//作成した新しいResponseに移し替え
+				summary.title(),
+				summary.author(),
+				summary.isbn(),
+				summary.publisher(),
+				publishedDate);
+	}
 }

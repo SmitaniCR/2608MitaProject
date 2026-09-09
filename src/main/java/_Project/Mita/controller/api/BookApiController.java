@@ -29,6 +29,7 @@ import _Project.Mita.form.BookRequest;
 import _Project.Mita.response.BookResponse;
 import _Project.Mita.response.BookSuggestionResponse;
 import _Project.Mita.response.CoverImageUploadResponse;
+import _Project.Mita.response.ExternalBookResponse;
 import _Project.Mita.response.PageResponse;
 import _Project.Mita.service.BookService;
 
@@ -179,4 +180,9 @@ public class BookApiController {
 		return new CoverImageUploadResponse(bookService.upImage(file));
 		
 	}
+	
+    @GetMapping("/isbn-lookup")
+    public ExternalBookResponse getBookInfo(@RequestParam String isbn) {
+        return bookService.getBookInfo(isbn);
+    }
 }
