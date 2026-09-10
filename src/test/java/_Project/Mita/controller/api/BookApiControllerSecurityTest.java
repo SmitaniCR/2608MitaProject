@@ -40,7 +40,7 @@ class BookApiControllerSecurityTest {
 
     
     @Test
-	@WithMockUser(roles = "USER")
+	@WithMockUser(roles = "ADMIN")
 	void 書籍登録時にtitleがnullだと400が返る() throws Exception {//@Validのエラー検証
 		mockMvc.perform(post("/api/books")
 				.with(csrf())

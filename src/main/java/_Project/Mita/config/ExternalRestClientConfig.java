@@ -13,7 +13,7 @@ public class ExternalRestClientConfig {
 
     @Bean
     public RestClient externalBookRestClient() {
-        
+    	System.out.println("★DEBUG baseUrl = " + baseUrl);
         return RestClient.builder()
         		.baseUrl(baseUrl)
         		.build();

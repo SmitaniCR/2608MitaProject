@@ -13,8 +13,6 @@ import _Project.Mita.exception.FileStorageException;
 @Repository
 public class FileStorageRepository {
 	
-	//鍵は削除済み
-	
 	public String saveImage(byte[] content, String originalFilename, String uploadDir) {
 		
 		String extension = "";

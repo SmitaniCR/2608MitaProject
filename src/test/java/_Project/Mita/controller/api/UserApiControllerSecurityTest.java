@@ -106,7 +106,7 @@ class UserApiControllerSecurityTest {
 		@WithMockUser(roles = "ADMIN")
 		void 管理者かつ存在しないユーザーIDの場合は404() throws Exception {
 
-			when(userService.updateRole(any(), any(), any())).thenThrow(new NoSuchElementException());
+			when(userService.updateRole(any(), any(), anyBoolean())).thenThrow(new NoSuchElementException());
 
 			mockMvc.perform(patch("/api/users/999999/role").with(csrf())
 					.contentType(MediaType.APPLICATION_JSON)

@@ -33,7 +33,7 @@ public class ExternalBookInfoRepository {//外部情報をDBに見立て、情�
                     .uri(uriBuilder -> uriBuilder.path("/get").queryParam("isbn", isbn).build())
                     .retrieve()
                     .body(responseType);               
-            
+            System.out.println("★DEBUG response = " + response);//デバッグ用
             if (response == null || response.isEmpty()) {
                 return Optional.empty();
             }
